@@ -100,7 +100,8 @@ org/eclipse/osgi/internal/framework/legacy/PackageAdminImpl$ExportedPackageImpl.
 ```
 
 Unfortunately, it doesn't look like they have a nicely packaged way to read their models (i.e. as a nice library with an API).
-If we wanted to have reliable read/write access to their models across MagicDraw versions, the best option may be to create a Cameo/MagicDraw plugin and have our EMC driver talk to it (similar to the PTC IM approach).
+If we wanted to have reliable read/write access to their models across MagicDraw versions, one option may be to create a Cameo/MagicDraw plugin and have our EMC driver talk to it (similar to the PTC IM approach), using e.g. gRPC.
+Another option would be to create MagicDraw/Cameo plugins that provide tooling for Epsilon: it could run from *inside* MagicDraw/Cameo and avoid overheads.
 
 Plugins seem to be just subfolders inside the MagicDraw `plugins/` folder with a custom `plugin.xml` file and the appropriate set of JARs.
 MagicDraw uses a single classloader, so we will want to be minimal about it.
