@@ -104,10 +104,35 @@ If we wanted to have reliable read/write access to their models across MagicDraw
 Another option would be to create MagicDraw/Cameo plugins that provide tooling for Epsilon: it could run from *inside* MagicDraw/Cameo and avoid overheads.
 
 Plugins seem to be just subfolders inside the MagicDraw `plugins/` folder with a custom `plugin.xml` file and the appropriate set of JARs.
-MagicDraw uses a single classloader, so we will want to be minimal about it.
+We can run the plugins inside the same classloader as MagicDraw, or inside a separate classloader: not sure how the plugin classloader would interact with the MagicDraw singletons, however.
 
 ## Exports
 
 The Ecore export only leaves the things that can be directly mapped (e.g. straight up classes).
 The Eclipse UML2 XMI exports appear to be very thorough, and they are also self-contained (MagicDraw exports the profiles, too): these do not include diagrams, though.
 If we are only reading Cameo files, it may be enough to use the UML2 export: the EMC driver would only make sense for writing straight into Cameo, I think.
+
+## Running the gRPC remote model access plugin
+
+It is not as simple as the OpenAPI docs, because gRPC uses a conflicting version of Guava (30+) compared to current MagicDraw (19).
+This means we *have* to run it in its own classloader already.
+To do so, first we have to prepare our MagicDraw plugin folder:
+
+```shell
+cd magicdraw-plugin/org.eclipse.epsilon.emc.magicdraw.modelapi
+./create-magicdraw-plugin.sh path/to/magicdraw/plugins
+```
+
+Then we have to export the `.mdplugin.remote` project as a JAR file into the plugin folder that the script created for us (named `org.eclipse.epsilon.emc.magicdraw.mdplugin.remote`).
+We can do that from Eclipse, directly.
+
+Next, we have to ensure the `magicdraw-plugin.xml` file is up to date, with any necessary `<library>` elements.
+One way to generate a list of elements that we can copy and paste is as follows:
+
+```shell
+cd path/to/plugins/org.eclipse.epsilon.emc.magicdraw.mdplugin.remote
+for i in *.jar; do echo "<library name=\"$i\"/>"; done
+```
+
+If we want to run the plugin, then we would simply start MagicDraw as usual.
+For debugging, we'll need to use a remote debugger.

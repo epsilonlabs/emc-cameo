@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+     If developing locally, please check the NOTES.md document for details on how to set it up.
+-->
+<plugin
+    id="org.eclipse.epsilon.emc.magicdraw.mdplugin.remote"
+    name="EMC MagicDraw Plugin (with remote API)"
+    version="1.0"
+    ownClassloader="true"
+    provider-name="University of York"
+    class="org.eclipse.epsilon.emc.magicdraw.mdplugin.remote.ModelAccessPlugin"
+    class-lookup="LocalFirst">
+    <runtime>
+        <library name="animal-sniffer-annotations-1.19.jar"/>
+        <library name="annotations-4.1.1.4.jar"/>
+        <library name="checker-compat-qual-2.5.5.jar"/>
+        <library name="checker-qual-3.12.0.jar"/>
+        <library name="epsilon-mdplugin.jar"/>
+        <library name="error_prone_annotations-2.10.0.jar"/>
+        <library name="failureaccess-1.0.1.jar"/>
+        <library name="grpc-api-1.47.0.jar"/>
+        <library name="grpc-context-1.47.0.jar"/>
+        <library name="grpc-core-1.47.0.jar"/>
+        <library name="grpc-netty-1.47.0.jar"/>
+        <library name="grpc-protobuf-1.47.0.jar"/>
+        <library name="grpc-protobuf-lite-1.47.0.jar"/>
+        <library name="grpc-stub-1.47.0.jar"/>
+        <library name="gson-2.9.0.jar"/>
+        <library name="guava-31.0.1-android.jar"/>
+        <library name="j2objc-annotations-1.3.jar"/>
+        <library name="javax.annotation-api-1.3.1.jar"/>
+        <library name="jsr305-3.0.2.jar"/>
+        <library name="listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar"/>
+        <library name="netty-buffer-4.1.72.Final.jar"/>
+        <library name="netty-codec-4.1.72.Final.jar"/>
+        <library name="netty-codec-http2-4.1.72.Final.jar"/>
+        <library name="netty-codec-http-4.1.72.Final.jar"/>
+        <library name="netty-codec-socks-4.1.72.Final.jar"/>
+        <library name="netty-common-4.1.72.Final.jar"/>
+        <library name="netty-handler-4.1.72.Final.jar"/>
+        <library name="netty-handler-proxy-4.1.72.Final.jar"/>
+        <library name="netty-resolver-4.1.72.Final.jar"/>
+        <library name="netty-tcnative-classes-2.0.46.Final.jar"/>
+        <library name="netty-transport-4.1.72.Final.jar"/>
+        <library name="netty-transport-native-unix-common-4.1.72.Final.jar"/>
+        <library name="org.eclipse.epsilon.emc.magicdraw.modelapi-2.4.0-SNAPSHOT.jar"/>
+        <library name="perfmark-api-0.25.0.jar"/>
+        <library name="protobuf-java-3.19.2.jar"/>
+        <library name="proto-google-common-protos-2.0.1.jar"/>
+    </runtime>
+</plugin>
