@@ -24,16 +24,25 @@ public class ModelAccessPlugin extends Plugin {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ModelAccessPlugin.class);
 
+	private ModelAccessServer server;
+
 	@Override
 	public boolean close() {
-		// TODO Auto-generated method stub
+		if (server != null) {
+			try {
+				server.stop();
+			} catch (InterruptedException e) {
+				LOGGER.error(e.getMessage(), e);
+			}
+		}
 		return true;
 	}
 
 	@Override
 	public void init() {
 		try {
-			new ModelAccessServer().start();
+			server = new ModelAccessServer();
+			server.start();
 		} catch (IOException e) {
 			LOGGER.error(e.getMessage(), e);
 		}
@@ -41,7 +50,6 @@ public class ModelAccessPlugin extends Plugin {
 
 	@Override
 	public boolean isSupported() {
-		// TODO Auto-generated method stub
 		return true;
 	}
 
