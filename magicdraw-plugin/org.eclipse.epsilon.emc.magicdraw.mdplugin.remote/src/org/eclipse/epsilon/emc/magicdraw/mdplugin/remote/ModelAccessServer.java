@@ -11,27 +11,13 @@
 package org.eclipse.epsilon.emc.magicdraw.mdplugin.remote;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.emf.common.util.TreeIterator;
-import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.HelloRequest;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.HelloResponse;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.HelloServiceGrpc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.Project;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
-import io.grpc.Status;
-import io.grpc.Status.Code;
-import io.grpc.StatusRuntimeException;
-import io.grpc.stub.StreamObserver;
 
 /**
  * gRPC-based server to access models.
@@ -39,7 +25,7 @@ import io.grpc.stub.StreamObserver;
 public class ModelAccessServer {
 
 	public static final int DEFAULT_PORT = 8123;
-	private static final Logger LOGGER = LoggerFactory.getLogger(ModelAccessServer.class);
+	static final Logger LOGGER = LoggerFactory.getLogger(ModelAccessServer.class);
 
 	private final int port;
 	private final Server server;
@@ -95,28 +81,5 @@ public class ModelAccessServer {
 		ModelAccessServer server = new ModelAccessServer();
 		server.start();
 		server.blockUntilShutdown();
-	}
-
-	private static class ModelAccessService extends HelloServiceGrpc.HelloServiceImplBase {
-		@Override
-		public void hello(HelloRequest request, StreamObserver<HelloResponse> responseObserver) {
-			Application app = Application.getInstance();
-			Project project = app.getProject();
-			if (project == null) {
-				LOGGER.error("Project is not open yet");
-				responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.FAILED_PRECONDITION)));
-			}
-
-			int count = 0;
-			Package pkg = project.getPrimaryModel();
-			for (TreeIterator<Object> it = EcoreUtil.getAllContents(Collections.singletonList(pkg)); it.hasNext(); it.next()) {
-				count++;
-			}
-
-			String greeting = String.format("Hello %s %s!!! Your primary model has %d objects.", request.getFirstName(), request.getLastName(), count);
-			HelloResponse response = HelloResponse.newBuilder().setGreeting(greeting).build();
-			responseObserver.onNext(response);
-			responseObserver.onCompleted();
-		}
 	}
 }

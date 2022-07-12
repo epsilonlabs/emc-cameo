@@ -13,6 +13,7 @@ package org.eclipse.epsilon.emc.magicdraw.tests;
 import static org.junit.Assert.assertEquals;
 
 import org.eclipse.epsilon.emc.magicdraw.MagicDrawModel;
+import org.eclipse.epsilon.eol.EolModule;
 import org.junit.Test;
 
 /**
@@ -31,4 +32,17 @@ public class MagicDrawModelTest {
 		}
 	}
 
+	@Test
+	public void nameClasses() throws Exception {
+		try (MagicDrawModel m = new MagicDrawModel()) {
+			m.setReadOnLoad(true);
+			m.setStoredOnDisposal(false);
+			m.load();
+
+			EolModule module = new EolModule();
+			module.parse("for (c in Class.all) { c.name.println(); }");
+			module.getContext().getModelRepository().addModel(m);
+			module.execute();
+		}
+	}
 }

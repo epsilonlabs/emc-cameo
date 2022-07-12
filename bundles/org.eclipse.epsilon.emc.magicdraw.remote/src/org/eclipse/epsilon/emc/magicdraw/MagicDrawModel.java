@@ -11,47 +11,172 @@
 package org.eclipse.epsilon.emc.magicdraw;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
-import org.eclipse.emf.common.util.URI;
-import org.eclipse.epsilon.emc.emf.AbstractEmfModel;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.HelloRequest;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.HelloResponse;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.HelloServiceGrpc;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.HelloServiceGrpc.HelloServiceBlockingStub;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfKindRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementCollection;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceGrpc;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceGrpc.ModelServiceBlockingStub;
+import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
+import org.eclipse.epsilon.eol.exceptions.models.EolEnumerationValueNotFoundException;
+import org.eclipse.epsilon.eol.exceptions.models.EolModelElementTypeNotFoundException;
 import org.eclipse.epsilon.eol.exceptions.models.EolModelLoadingException;
+import org.eclipse.epsilon.eol.exceptions.models.EolNotInstantiableModelElementTypeException;
+import org.eclipse.epsilon.eol.models.CachedModel;
 
 import io.grpc.ManagedChannel;
 import io.grpc.netty.NettyChannelBuilder;
 
-public class MagicDrawModel extends AbstractEmfModel {
+public class MagicDrawModel extends CachedModel<MDModelElement> {
 
-	private URI modelUri;
+	private ManagedChannel channel;
+	private ModelServiceBlockingStub client;
 
-	public URI getModelURI() {
-		return modelUri;
+	public MagicDrawModel() {
+		propertyGetter = new MagicDrawPropertyGetter(this);
 	}
 
-	public void setModelURI(URI modelUri) {
-		this.modelUri = modelUri;
+	protected ModelServiceBlockingStub getClient() {
+		return client;
 	}
 
 	@Override
 	public boolean store() {
-		// TODO Auto-generated method stub
-		return false;
+		throw new UnsupportedOperationException("Storing not implemented yet");
 	}
 
 	@Override
 	protected void loadModel() throws EolModelLoadingException {
 		// Test out gRPC
-		ManagedChannel channel = NettyChannelBuilder.forAddress(new InetSocketAddress("localhost", 8123)).usePlaintext().build();
-		HelloServiceBlockingStub blockingClient = HelloServiceGrpc.newBlockingStub(channel);
+		channel = NettyChannelBuilder.forAddress(new InetSocketAddress("localhost", 8123)).usePlaintext().build();
+		client = ModelServiceGrpc.newBlockingStub(channel);
+		System.out.println("Connected to MagicDraw");
+	}
 
-		HelloRequest request = HelloRequest.newBuilder().setFirstName("Antonio").setLastName("Garcia").build();
-		HelloResponse response = blockingClient.hello(request);
-		System.out.println("gRPC from MagicDraw said " + response.getGreeting());
+	@Override
+	public Object getEnumerationValue(String enumeration, String label) throws EolEnumerationValueNotFoundException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
-		// TODO stubbed
+	@Override
+	public String getTypeNameOf(Object instance) {
+		return ((MDModelElement) instance).getTypeName();
+	}
+
+	@Override
+	public Object getElementById(String id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getElementId(Object instance) {
+		return ((MDModelElement) instance).getElementID();
+	}
+
+	@Override
+	public void setElementId(Object instance, String newId) {
+		throw new UnsupportedOperationException("Cannot change IDs for MagicDraw objects");
+	}
+
+	@Override
+	public boolean owns(Object instance) {
+		return instance instanceof MDModelElement && ((MDModelElement)instance).getModel() == this;
+	}
+
+	@Override
+	public boolean isInstantiable(String type) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean hasType(String type) {
+		// TODO need API to ask server for registered models
+
+		return true;
+	}
+
+	@Override
+	public boolean store(String location) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	protected Collection<MDModelElement> allContentsFromModel() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected Collection<MDModelElement> getAllOfTypeFromModel(String type)
+			throws EolModelElementTypeNotFoundException {
+		// TODO Need to implement exact type finding in server
+		return getAllOfKindFromModel(type);
+	}
+
+	@Override
+	protected Collection<MDModelElement> getAllOfKindFromModel(String kind) throws EolModelElementTypeNotFoundException {
+		AllOfKindRequest request;
+		String[] parts = kind.split("::");
+		if (parts.length > 1) {
+			request = AllOfKindRequest.newBuilder()
+				.setMetamodelUri(parts[0])
+				.setTypeName(parts[1])
+				.build();
+		} else {
+			request = AllOfKindRequest.newBuilder()
+				.setTypeName(parts[0])
+				.build();
+		}
+		
+		ModelElementCollection response = client.allOfKind(request);
+		List<MDModelElement> elements = new ArrayList<>(response.getValuesCount());
+		for (ModelElement e : response.getValuesList()) {
+			elements.add(new MDModelElement(this, e));
+		}
+
+		return elements;
+	}
+
+	@Override
+	protected MDModelElement createInstanceInModel(String type) throws EolModelElementTypeNotFoundException, EolNotInstantiableModelElementTypeException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected void disposeModel() {
+		// TODO Would need to complete editing session if store==true
+
+		if (channel != null) {
+			channel.shutdown();
+			channel = null;
+			client = null;
+		}
+	}
+
+	@Override
+	protected boolean deleteElementInModel(Object instance) throws EolRuntimeException {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	protected Object getCacheKeyForType(String type) throws EolModelElementTypeNotFoundException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected Collection<String> getAllTypeNamesOf(Object instance) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -3,15 +3,59 @@ option java_multiple_files = true;
 
 package org.eclipse.epsilon.emc.magicdraw.modelapi;
 
-message HelloRequest {
-    string firstName = 1;
-    string lastName = 2;
+message ModelElement {
+    string elementID = 1;
+    string metamodelUri = 2;
+    string typeName = 3;
 }
 
-message HelloResponse {
-    string greeting = 1;
+message StringCollection {
+    repeated string values = 1;
 }
 
-service HelloService {
-    rpc hello(HelloRequest) returns (HelloResponse);
+message DoubleCollection {
+    repeated double values = 1;
+}
+
+message IntegerCollection {
+    repeated sint64 values = 1;
+}
+
+message BooleanCollection {
+    repeated bool values = 1;
+}
+
+message ModelElementCollection {
+    repeated ModelElement values =  1;
+}
+
+message Value {
+    oneof value {
+        string stringValue = 1;
+        double doubleValue = 2;
+        sint64 longValue = 3;
+        bool booleanValue = 4;
+        ModelElement referenceValue = 5;
+
+        StringCollection stringValues = 7;
+        DoubleCollection doubleValues = 8;
+        IntegerCollection longValues = 9;
+        BooleanCollection booleanValues = 10;
+        ModelElementCollection referenceValues = 11;
+    }
+}
+
+message AllOfKindRequest {
+    string metamodelUri = 1;
+    string typeName = 2;
+}
+
+message GetFeatureValueRequest {
+    string elementID = 1;
+    string featureName = 2;
+}
+
+service ModelService {
+    rpc allOfKind(AllOfKindRequest) returns (ModelElementCollection);
+    rpc getFeatureValue(GetFeatureValueRequest) returns (Value);
 }
