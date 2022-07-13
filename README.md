@@ -54,7 +54,7 @@ You must also rerun the script whenever you change the `mdplugin.remote` project
 
 ### Remote debugging and hot code swapping
 
-Edit the `bin/magicdraw.properties` file in the MagicDraw installation, adding this at the end of the line with `JAVA_ARGS` (add a space before the last existing argument):
+Edit the `bin/magicdraw.properties` file in the MagicDraw installation, adding this at the end of the line starting with `JAVA_ARGS=` (add a space before the last existing argument):
 
 ```text
 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
