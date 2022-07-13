@@ -50,7 +50,7 @@ cd magicdraw-plugin/org.eclipse.epsilon.emc.magicdraw.modelapi
 ```
 
 You must rerun this script every time you change the `ModelService.proto` file in the `magicdraw.modelapi` plugin.
-You must also rerun the script whenever you change the `mdplugin.remote` project, but you can avoid some of this if you are not using hot code swapping via remote debugging (see below).
+You must also rerun the script whenever you change the `mdplugin.remote` project, but you can avoid some of this if you are using hot code swapping via remote debugging (see below).
 
 ### Remote debugging and hot code swapping
 
