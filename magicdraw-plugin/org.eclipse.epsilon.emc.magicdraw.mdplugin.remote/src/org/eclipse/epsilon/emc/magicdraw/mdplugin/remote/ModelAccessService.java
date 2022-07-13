@@ -38,7 +38,9 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.foundation.MDObject;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import com.nomagic.magicdraw.uml.BaseElement;
+import com.nomagic.magicdraw.uml.Finder;
+import com.teamdev.jxbrowser.logging.Logger;
 
 import io.grpc.Status;
 import io.grpc.Status.Code;
@@ -61,9 +63,27 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 			return;
 		}
 
-		Package pkg = project.getPrimaryModel();
+		EObject root;
+		final String rootElementHyperlink = request.getRootElementHyperlink();
+		if (rootElementHyperlink == null || rootElementHyperlink.length() == 0) {
+			root = project.getPrimaryModel(); 
+		} else {
+			BaseElement element = Finder.byHyperlink().find(project, rootElementHyperlink);
+			if (element == null) {
+				Logger.error(String.format("Could not find element with URI %s", rootElementHyperlink));
+				responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
+				return;
+			} else if (!(element instanceof EObject)) {
+				Logger.error(String.format("Element with URI %s is not an EObject", rootElementHyperlink));
+				responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
+				return;
+			} else {
+				root = (EObject) element;
+			}
+		}
+
 		ModelElementCollection.Builder builder = ModelElementCollection.newBuilder();
-		for (TreeIterator<EObject> it = EcoreUtil.getAllContents(pkg, true); it.hasNext();) {
+		for (TreeIterator<EObject> it = EcoreUtil.getAllProperContents(root, true); it.hasNext();) {
 			EObject eob = it.next();
 
 			// NOTE: some are EObjects but not MDObjects (??)
@@ -128,23 +148,22 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 			return;
 		}
 
+		final Value.Builder vBuilder = Value.newBuilder();
 		final EStructuralFeature eFeature = mdObject.eClass().getEStructuralFeature(request.getFeatureName());
 		if (eFeature == null) {
-			responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
-			ModelAccessServer.LOGGER.error(String.format("Feature '%s' is not defined for element type '%s::%s'", request.getFeatureName(), mdObject.eClass().getEPackage().getNsURI(), mdObject.eClass().getName()));
-			return;
-		}
-
-		Value.Builder vBuilder = Value.newBuilder();
-		final Object rawValue = mdObject.eGet(eFeature);
-		if (rawValue != null) {
-			if (eFeature instanceof EReference) {
-				encodeReference((EReference) eFeature, rawValue, vBuilder);
-			} else if (eFeature instanceof EAttribute) {
-				encodeAttribute(eFeature, vBuilder, rawValue);
-			} else {
-				ModelAccessServer.LOGGER.error(String.format("Unknown feature type '%s'", eFeature.eClass().getName()));
-				responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
+			vBuilder.setNotDefined(true);
+			ModelAccessServer.LOGGER.warn(String.format("Feature '%s' is not defined for element type '%s::%s'", request.getFeatureName(), mdObject.eClass().getEPackage().getNsURI(), mdObject.eClass().getName()));
+		} else {
+			final Object rawValue = mdObject.eGet(eFeature);
+			if (rawValue != null) {
+				if (eFeature instanceof EReference) {
+					encodeReference((EReference) eFeature, rawValue, vBuilder);
+				} else if (eFeature instanceof EAttribute) {
+					encodeAttribute(eFeature, vBuilder, rawValue);
+				} else {
+					ModelAccessServer.LOGGER.error(String.format("Unknown feature type '%s'", eFeature.eClass().getName()));
+					responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
+				}
 			}
 		}
 
@@ -198,6 +217,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private void encodeReference(EReference eReference, final Object rawValue, Value.Builder vBuilder) {
 		if (eReference.isMany()) {
 			ModelElementCollection.Builder cBuilder = ModelElementCollection.newBuilder();
@@ -210,5 +230,4 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		}
 	}
 
-	
 }

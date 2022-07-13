@@ -42,12 +42,16 @@ message Value {
         IntegerCollection longValues = 9;
         BooleanCollection booleanValues = 10;
         ModelElementCollection referenceValues = 11;
+
+        bool notDefined = 12;
     }
 }
 
 message AllOfKindRequest {
     string metamodelUri = 1;
     string typeName = 2;
+
+    string rootElementHyperlink = 3;
 }
 
 message GetFeatureValueRequest {

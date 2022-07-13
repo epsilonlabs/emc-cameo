@@ -35,12 +35,22 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	private ManagedChannel channel;
 	private ModelServiceBlockingStub client;
 
+	private String rootElementHyperlink;
+
 	public MagicDrawModel() {
 		propertyGetter = new MagicDrawPropertyGetter(this);
 	}
 
 	protected ModelServiceBlockingStub getClient() {
 		return client;
+	}
+
+	public String getRootElementHyperlink() {
+		return rootElementHyperlink;
+	}
+
+	public void setRootElementHyperlink(String rootElementHyperlink) {
+		this.rootElementHyperlink = rootElementHyperlink;
 	}
 
 	@Override
@@ -53,7 +63,6 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 		// Test out gRPC
 		channel = NettyChannelBuilder.forAddress(new InetSocketAddress("localhost", 8123)).usePlaintext().build();
 		client = ModelServiceGrpc.newBlockingStub(channel);
-		System.out.println("Connected to MagicDraw");
 	}
 
 	@Override
@@ -128,10 +137,12 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 			request = AllOfKindRequest.newBuilder()
 				.setMetamodelUri(parts[0])
 				.setTypeName(parts[1])
+				.setRootElementHyperlink(rootElementHyperlink)
 				.build();
 		} else {
 			request = AllOfKindRequest.newBuilder()
 				.setTypeName(parts[0])
+				.setRootElementHyperlink(rootElementHyperlink)
 				.build();
 		}
 		

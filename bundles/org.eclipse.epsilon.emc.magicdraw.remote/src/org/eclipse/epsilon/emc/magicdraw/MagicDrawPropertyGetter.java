@@ -54,7 +54,8 @@ public class MagicDrawPropertyGetter extends JavaPropertyGetter {
 					elems.add(new MDModelElement(model, e));
 				}
 				return elems;
-			case VALUE_NOT_SET: return null;
+			case NOTDEFINED: /* just let it trickle to the Java property getter */ break;
+			case VALUE_NOT_SET: return null; 
 			}
 		}
 

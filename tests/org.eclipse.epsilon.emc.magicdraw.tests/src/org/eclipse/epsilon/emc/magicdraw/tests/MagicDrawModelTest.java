@@ -14,6 +14,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.eclipse.epsilon.emc.magicdraw.MagicDrawModel;
 import org.eclipse.epsilon.eol.EolModule;
+import org.eclipse.epsilon.eol.exceptions.models.EolModelLoadingException;
 import org.junit.Test;
 
 /**
@@ -23,26 +24,31 @@ public class MagicDrawModelTest {
 
 	@Test
 	public void zoo() throws Exception {
-		try (MagicDrawModel m = new MagicDrawModel()) {
-			m.setReadOnLoad(true);
-			m.setStoredOnDisposal(false);
-			m.load();
-
+		try (MagicDrawModel m = createZooModel()) {
 			assertEquals("4 classes should be visible from the sample Zoo model", 4, m.getAllOfKind("Class").size());
 		}
 	}
 
 	@Test
-	public void nameClasses() throws Exception {
-		try (MagicDrawModel m = new MagicDrawModel()) {
-			m.setReadOnLoad(true);
-			m.setStoredOnDisposal(false);
-			m.load();
-
+	public void zooClassNames() throws Exception {
+		try (MagicDrawModel m = createZooModel()) {
 			EolModule module = new EolModule();
-			module.parse("for (c in Class.all) { c.name.println(); }");
 			module.getContext().getModelRepository().addModel(m);
+			module.parse("for (c in Class.all) { (c.name + ' is really a ' + c.typeName).println(); }");
 			module.execute();
 		}
+	}
+
+	/**
+	 * This test assumes you have opened the resources/example-zoo.mdzip file in MagicDraw.
+	 */
+	private MagicDrawModel createZooModel() throws EolModelLoadingException {
+		MagicDrawModel m = new MagicDrawModel();
+		m.setReadOnLoad(true);
+		m.setStoredOnDisposal(false);
+		m.setRootElementHyperlink("mdel://eee_1045467100313_135436_1");
+		m.load();
+
+		return m;
 	}
 }
