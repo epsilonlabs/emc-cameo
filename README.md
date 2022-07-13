@@ -25,7 +25,7 @@ You will need:
 * [M2Eclipse](https://www.eclipse.org/m2e/).
 * A MagicDraw 2021x installation (MagicDraw has a [free demo](https://www.magicdraw.com/download/magicdraw), only limited in model size).
 
-Currently, the build environment uses some Unix scripts.
+Currently, the build environment uses some Bash scripts.
 If using Windows, you will need [WSL2](https://docs.microsoft.com/en-us/windows/wsl/install).
 
 ### Eclipse configuration
