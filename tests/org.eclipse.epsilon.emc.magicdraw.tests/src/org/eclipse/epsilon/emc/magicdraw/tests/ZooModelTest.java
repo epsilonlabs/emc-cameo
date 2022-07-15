@@ -12,13 +12,16 @@ package org.eclipse.epsilon.emc.magicdraw.tests;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
 
+import org.eclipse.epsilon.emc.magicdraw.MDEnumerationLiteral;
 import org.eclipse.epsilon.emc.magicdraw.MDModelElement;
 import org.eclipse.epsilon.emc.magicdraw.MagicDrawModel;
 import org.eclipse.epsilon.eol.EolModule;
+import org.eclipse.epsilon.eol.exceptions.models.EolEnumerationValueNotFoundException;
 import org.eclipse.epsilon.eol.exceptions.models.EolModelLoadingException;
 import org.junit.After;
 import org.junit.Before;
@@ -70,6 +73,30 @@ public class ZooModelTest {
 		assertTrue("Should have the Class type", m.hasType("Class"));
 		assertTrue("Using package::type should work", m.hasType("uml::Class"));
 		assertFalse("Should not have the missing type", m.hasType("DoesNotExist"));
+	}
+
+	@Test
+	public void enumLiteralFound() throws Exception {
+		MDEnumerationLiteral literal = (MDEnumerationLiteral) m.getEnumerationValue("uml::VisibilityKind", "private");
+
+		assertNotNull(literal);
+		assertEquals(1, literal.getValue());
+		assertEquals("private", literal.getName());
+		assertEquals("private", literal.getLiteral());
+	}
+
+	@Test
+	public void enumLiteralFoundEOL() throws Exception {
+		EolModule module = new EolModule();
+		module.getContext().getModelRepository().addModel(m);
+		module.parse("return uml::VisibilityKind#private;");
+		MDEnumerationLiteral literal = (MDEnumerationLiteral) m.getEnumerationValue("uml::VisibilityKind", "private");
+		assertNotNull(literal);
+	}
+
+	@Test(expected=EolEnumerationValueNotFoundException.class)
+	public void enumLiteralNotFound() throws Exception {
+		m.getEnumerationValue("something", "else");
 	}
 
 	@Before

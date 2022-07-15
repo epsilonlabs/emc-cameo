@@ -13,6 +13,7 @@ package org.eclipse.epsilon.emc.magicdraw.mdplugin.remote;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -24,6 +25,8 @@ import java.util.stream.Collectors;
 import org.eclipse.emf.common.util.TreeIterator;
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClassifier;
+import org.eclipse.emf.ecore.EEnum;
+import org.eclipse.emf.ecore.EEnumLiteral;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EReference;
@@ -71,11 +74,10 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 
 		EClassifier eClassifier;
 		if (request.getTypeName() != null && request.getTypeName().length() > 0) {
-			eClassifier = findEClassifier(request.getTypeName());
-			if (eClassifier == null) {
-				responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
-				return;
-			}
+			Collection<EClassifier> options = findEClassifier(request.getTypeName());
+			checkForAmbiguousType(request.getTypeName(), responseObserver, options);
+			if (options.isEmpty()) return;
+			eClassifier = options.iterator().next();
 		} else {
 			eClassifier = null;
 		}
@@ -102,6 +104,16 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		final ModelElementCollection allOfResponse = getAllOf(eClassifier, root, request.getOnlyExactType());
 		responseObserver.onNext(allOfResponse);
 		responseObserver.onCompleted();
+	}
+
+	private void checkForAmbiguousType(String type, StreamObserver<?> responseObserver, Collection<? extends EClassifier> options) {
+		if (options.size() == 0) {
+			LOGGER.warn(String.format("Cannot find type '%s'", type));
+			responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
+		} else if (options.size() > 1) {
+			List<String> nsURIs = options.stream().map(e -> getFullyQualifiedName(e) + " from " + e.getEPackage()).collect(Collectors.toList());
+			LOGGER.warn(String.format("Type '%s' is ambiguous (options: %s)", type, nsURIs));
+		}
 	}
 
 	private ModelElementCollection getAllOf(EClassifier eClassifier, EObject root, final boolean onlyExactType) {
@@ -158,26 +170,18 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		return sb.toString();
 	}
 
-	private EClassifier findEClassifier(String typeName) {
+	private Collection<EClassifier> findEClassifier(String typeName) {
 		final List<String> parts = Arrays.asList(typeName.split("::"));
 		if (parts.size() > 1) {
 			final EClassifier eClassifier = findEClassifierAbsolute(parts, getRootEPackages());
 			if (eClassifier == null) {
 				LOGGER.warn(String.format("Cannot find type '%s'", typeName));
 			}
-			return eClassifier;
+			return Collections.singleton(eClassifier);
 		} else {
 			final Set<EClassifier> options = new HashSet<>();
 			findEClassifierByName(parts.get(0), getRootEPackages(), options);
-
-			if (options.size() == 0) {
-				LOGGER.warn(String.format("Cannot find type '%s'", typeName));
-				return null;
-			} else if (options.size() > 1) {
-				List<String> nsURIs = options.stream().map(e -> getFullyQualifiedName(e) + " from " + e.getEPackage()).collect(Collectors.toList());
-				LOGGER.warn(String.format("Type '%s' is ambiguous (options: %s)", typeName, nsURIs));
-			}
-			return options.iterator().next();
+			return options;
 		}
 	}
 
@@ -324,9 +328,50 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 
 	@Override
 	public void hasType(HasTypeRequest request, StreamObserver<HasTypeResponse> responseObserver) {
-		EClassifier eClassifier = findEClassifier(request.getTypeName());
-		responseObserver.onNext(HasTypeResponse.newBuilder().setHasType(eClassifier != null).build());
+		Collection<EClassifier> options = findEClassifier(request.getTypeName());
+		responseObserver.onNext(HasTypeResponse.newBuilder().setHasType(!options.isEmpty()).build());
 		responseObserver.onCompleted();
 	}
 
+	@Override
+	public void getEnumerationValue(GetEnumerationValueRequest request,
+			StreamObserver<GetEnumerationValueResponse> responseObserver) {
+
+		// Find the matching enumerations
+		final Collection<EClassifier> eClassifierOptions = findEClassifier(request.getEnumeration());
+		final List<EEnum> eEnumOptions = eClassifierOptions.stream()
+			.filter(c -> (c instanceof EEnum))
+			.map(c -> (EEnum) c)
+			.collect(Collectors.toList());
+		checkForAmbiguousType(request.getEnumeration(), responseObserver, eEnumOptions);
+		if (eEnumOptions.isEmpty()) return;
+
+		// Find the matching literal
+		EEnumLiteral literal = null;
+		for (EClassifier eClassifier : eEnumOptions) {
+			if (eClassifier instanceof EEnum) {
+				EEnum eEnum = (EEnum) eClassifier;
+				literal = eEnum.getEEnumLiteral(request.getLabel());
+				if (literal != null) {
+					break;
+				}
+			}
+		}
+
+		// Report result
+		if (literal == null) {
+			LOGGER.warn(String.format("Could not find enumeration value '%s' in '%s'", request.getLabel(), request.getEnumeration()));
+			responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
+		} else {
+			final GetEnumerationValueResponse response = GetEnumerationValueResponse.newBuilder()
+				.setValue(literal.getValue())
+				.setLiteral(literal.getLiteral())
+				.setName(literal.getName())
+				.build();
+
+			responseObserver.onNext(response);
+			responseObserver.onCompleted();
+		}
+	}
+	
 }

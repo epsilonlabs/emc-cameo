@@ -71,8 +71,20 @@ message HasTypeResponse {
     bool hasType = 1;
 }
 
+message GetEnumerationValueRequest {
+    string enumeration = 1;
+    string label = 2;
+}
+
+message GetEnumerationValueResponse {
+    string name = 1;
+    sint32 value = 2;
+    string literal = 3;
+}
+
 service ModelService {
     rpc allOf(AllOfRequest) returns (ModelElementCollection);
+    rpc getEnumerationValue(GetEnumerationValueRequest) returns (GetEnumerationValueResponse);
     rpc getFeatureValue(GetFeatureValueRequest) returns (Value);
     rpc hasType(HasTypeRequest) returns (HasTypeResponse);
 }

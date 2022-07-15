@@ -16,6 +16,8 @@ import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueResponse;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.HasTypeRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementCollection;
@@ -33,6 +35,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
 import io.grpc.ManagedChannel;
+import io.grpc.StatusRuntimeException;
 import io.grpc.netty.NettyChannelBuilder;
 
 public class MagicDrawModel extends CachedModel<MDModelElement> {
@@ -79,8 +82,17 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 
 	@Override
 	public Object getEnumerationValue(String enumeration, String label) throws EolEnumerationValueNotFoundException {
-		// TODO Auto-generated method stub
-		return null;
+		final GetEnumerationValueRequest request = GetEnumerationValueRequest.newBuilder()
+			.setEnumeration(enumeration)
+			.setLabel(label)
+			.build();
+
+		try {
+			final GetEnumerationValueResponse response = client.getEnumerationValue(request);
+			return new MDEnumerationLiteral(response);
+		} catch (StatusRuntimeException ex) {
+			throw new EolEnumerationValueNotFoundException(enumeration, label, name);
+		}
 	}
 
 	@Override
