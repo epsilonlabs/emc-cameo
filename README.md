@@ -64,6 +64,12 @@ This will allow you to use the `Remote Debug MagicDraw.launch` file in the `mdpl
 While you are in a remote debugging session, any changes you make to method bodies will be reflected in the running instance of MagicDraw.
 If you make changes to the structure of the code (i.e. adding/removing/renaming methods and/or classes), however, hot code swapping will not work: you will need to close MagicDraw, rerun the `create-magicdraw-plugin.sh` script, and start MagicDraw again.
 
+While developing, it is best to run MagicDraw in verbose mode from a console, to see the log messages:
+
+```shell
+./magicdraw -verbose
+```
+
 ## Other resources
 
 * [Blog post on using Xtend from a Cameo/MagicDraw plugin](https://blogs.itemis.com/en/model-transformations-for-mbse-with-cameo-and-xtend)
