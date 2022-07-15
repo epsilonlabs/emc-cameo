@@ -54,7 +54,7 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	private static final int HAS_TYPE_CACHE_SIZE = 100;
 	private final LoadingCache<String, Optional<ModelElementType>> getTypeCache = CacheBuilder.newBuilder()
 			.maximumSize(HAS_TYPE_CACHE_SIZE)
-			.build(new HasTypeCacheLoader());
+			.build(new GetTypeCacheLoader());
 
 	private ManagedChannel channel;
 	private ModelServiceBlockingStub client;
@@ -257,7 +257,7 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 		}
 	}
 
-	private class HasTypeCacheLoader extends CacheLoader<String, Optional<ModelElementType>> {
+	private class GetTypeCacheLoader extends CacheLoader<String, Optional<ModelElementType>> {
 		@Override
 		public Optional<ModelElementType> load(String type) {
 			GetTypeRequest request = GetTypeRequest.newBuilder().setTypeName(type).build();
