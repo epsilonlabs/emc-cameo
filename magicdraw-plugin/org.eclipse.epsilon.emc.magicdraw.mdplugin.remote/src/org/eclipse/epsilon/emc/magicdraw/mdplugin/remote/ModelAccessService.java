@@ -36,6 +36,7 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.BooleanCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.DoubleCollection;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.Empty;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetElementByIDRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueResponse;
@@ -420,6 +421,12 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 			responseObserver.onNext(encodeModelElement((MDObject) element));
 			responseObserver.onCompleted();
 		}
+	}
+
+	@Override
+	public void ping(Empty request, StreamObserver<Empty> responseObserver) {
+		responseObserver.onNext(Empty.newBuilder().build());
+		responseObserver.onCompleted();
 	}
 	
 }

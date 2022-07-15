@@ -94,7 +94,12 @@ message GetElementByIDRequest {
     string elementID = 1;
 }
 
+message Empty {}
+
 service ModelService {
+    // gRPC lazily connects: we can use this as a "ping" to see if the server is available
+    rpc ping(Empty) returns (Empty);
+
     rpc allOf(AllOfRequest) returns (ModelElementCollection);
     rpc getElementByID(GetElementByIDRequest) returns (ModelElement);
     rpc getEnumerationValue(GetEnumerationValueRequest) returns (GetEnumerationValueResponse);

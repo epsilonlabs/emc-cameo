@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 import org.eclipse.epsilon.common.util.StringProperties;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.Empty;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetElementByIDRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueResponse;
@@ -86,6 +87,11 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 		// Connect to MagicDraw
 		channel = NettyChannelBuilder.forAddress(new InetSocketAddress("localhost", 8123)).usePlaintext().build();
 		client = ModelServiceGrpc.newBlockingStub(channel);
+		try {
+			client.ping(Empty.newBuilder().build());
+		} catch (StatusRuntimeException ex) {
+			throw new EolModelLoadingException(ex, this);
+		}
 
 		// Invalidate all caches
 		getTypeCache.invalidateAll();
