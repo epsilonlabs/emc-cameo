@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.eclipse.epsilon.common.util.StringProperties;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetElementByIDRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueRequest;
@@ -34,6 +35,7 @@ import org.eclipse.epsilon.eol.exceptions.models.EolModelElementTypeNotFoundExce
 import org.eclipse.epsilon.eol.exceptions.models.EolModelLoadingException;
 import org.eclipse.epsilon.eol.exceptions.models.EolNotInstantiableModelElementTypeException;
 import org.eclipse.epsilon.eol.models.CachedModel;
+import org.eclipse.epsilon.eol.models.IRelativePathResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,6 +92,15 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	}
 
 	@Override
+	public void load(StringProperties properties, IRelativePathResolver resolver) throws EolModelLoadingException {
+		super.load(properties, resolver);
+
+		// TODO add properties for custom host + port
+
+		load();
+	}
+
+	@Override
 	public Object getEnumerationValue(String enumeration, String label) throws EolEnumerationValueNotFoundException {
 		final GetEnumerationValueRequest request = GetEnumerationValueRequest.newBuilder()
 			.setEnumeration(enumeration)
@@ -129,6 +140,11 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	@Override
 	public boolean owns(Object instance) {
 		return instance instanceof MDModelElement && ((MDModelElement) instance).getModel() == this;
+	}
+
+	@Override
+	public boolean isLoaded() {
+		return client != null;
 	}
 
 	@Override
