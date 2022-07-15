@@ -1,9 +1,22 @@
 # emc-cameo
 
-This project contains a prototype Epsilon Model Connectivity (EMC) Driver for [MagicDraw](https://magicdraw.com) / [Cameo](https://www.3ds.com/products-services/catia/products/no-magic/cameo-enterprise-architecture/).
-It uses [gRPC](https://grpc.io) to communicate with a running Cameo instance.
+![Maven CI workflow status](https://github.com/epsilonlabs/emc-cameo/actions/workflows/maven.yml/badge.svg)
 
-## Overall structure
+This project contains a prototype [Eclipse Epsilon Model Connectivity](https://www.eclipse.org/epsilon/doc/emc/) (EMC) driver for [MagicDraw](https://magicdraw.com) / [Cameo](https://www.3ds.com/products-services/catia/products/no-magic/cameo-enterprise-architecture/).
+
+It uses [gRPC](https://grpc.io) to communicate with a running MagicDraw/Cameo instance.
+
+## Installation instructions
+
+To install the latest [release](https://github.com/epsilonlabs/emc-cameo/releases) of the plugin, follow these steps:
+
+1. Ensure you have MagicDraw/Cameo, Eclipse and Epsilon installed.
+1. Go to the latest release, and download both files:
+   * The `cameo-mdplugin-*.zip` file will need to be downloaded and unzipped into your MagicDraw `plugins` directory.
+   * The `org.eclipse.epsilon*.zip` file is a zipped Eclipse update site: install all its features through the "Help - Install New Software..." menu entry.
+1. You will now be able to add a new type of model to your Epsilon launch configurations, called a "MagicDraw Instance".
+
+## Overall repository structure
 
 * `magicdraw-plugins`: source code for the MagicDraw plugin needed to gain access to MagicDraw/Cameo models.
   * `org.eclipse.epsilon.emc.magicdraw.mdplugin.remote`: the actual MagicDraw plugin, as a plain Java project. Implements a remote model access server.
