@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Tests for EMC Driver for MagicDraw
-Bundle-SymbolicName: org.eclipse.epsilon.emc.magicdraw.tests
+Bundle-SymbolicName: org.eclipse.epsilon.emc.magicdraw.remote.tests
 Bundle-Version: 2.4.0.qualifier
 Bundle-Vendor: Eclipse.org
 Fragment-Host: org.eclipse.epsilon.emc.magicdraw.remote;bundle-version="2.4.0"

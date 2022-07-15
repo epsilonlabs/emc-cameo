@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 
 import org.eclipse.emf.common.util.TreeIterator;
 import org.eclipse.emf.ecore.EAttribute;
+import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EEnum;
 import org.eclipse.emf.ecore.EEnumLiteral;
@@ -39,11 +40,11 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.GetElementByIDRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueResponse;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetFeatureValueRequest;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.HasTypeRequest;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.HasTypeResponse;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.GetTypeRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.IntegerCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementCollection;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementType;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceGrpc;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.StringCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
@@ -327,10 +328,21 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		}
 	}
 
+	
+
 	@Override
-	public void hasType(HasTypeRequest request, StreamObserver<HasTypeResponse> responseObserver) {
+	public void getType(GetTypeRequest request, StreamObserver<ModelElementType> responseObserver) {
 		Collection<EClassifier> options = findEClassifier(request.getTypeName());
-		responseObserver.onNext(HasTypeResponse.newBuilder().setHasType(!options.isEmpty()).build());
+		checkForAmbiguousType(request.getTypeName(), responseObserver, options);
+		if (options.isEmpty()) return;
+		final EClassifier eClassifier = options.iterator().next();
+
+		final ModelElementType response = ModelElementType.newBuilder()
+			.setMetamodelUri(eClassifier.getEPackage().getNsPrefix())
+			.setTypeName(getFullyQualifiedName(eClassifier))
+			.setIsAbstract(eClassifier instanceof EClass && ((EClass) eClassifier).isAbstract())
+			.build();
+		responseObserver.onNext(response);
 		responseObserver.onCompleted();
 	}
 

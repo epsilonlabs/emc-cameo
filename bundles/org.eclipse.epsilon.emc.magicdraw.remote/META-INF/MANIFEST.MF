@@ -6,5 +6,7 @@ Bundle-Version: 2.4.0.qualifier
 Bundle-Vendor: Eclipse.org
 Automatic-Module-Name: org.eclipse.epsilon.emc.magicdraw
 Bundle-RequiredExecutionEnvironment: JavaSE-11
-Require-Bundle: org.eclipse.epsilon.eol.engine;bundle-version="2.0.0"
+Require-Bundle: org.eclipse.epsilon.eol.engine;bundle-version="2.0.0",
+ org.slf4j.api;bundle-version="1.7.30"
 Bundle-ClassPath: lib/org.eclipse.epsilon.emc.magicdraw.modelapi-2.4.0-SNAPSHOT-uberjar.jar
+Export-Package: org.eclipse.epsilon.emc.magicdraw.remote

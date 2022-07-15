@@ -8,20 +8,22 @@
  * Contributors:
  *    Antonio Garcia-Dominguez - initial API and implementation
  *******************************************************************************/
-package org.eclipse.epsilon.emc.magicdraw;
+package org.eclipse.epsilon.emc.magicdraw.remote;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetElementByIDRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueResponse;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.HasTypeRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.GetTypeRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementCollection;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementType;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceGrpc;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceGrpc.ModelServiceBlockingStub;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
@@ -30,6 +32,8 @@ import org.eclipse.epsilon.eol.exceptions.models.EolModelElementTypeNotFoundExce
 import org.eclipse.epsilon.eol.exceptions.models.EolModelLoadingException;
 import org.eclipse.epsilon.eol.exceptions.models.EolNotInstantiableModelElementTypeException;
 import org.eclipse.epsilon.eol.models.CachedModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -40,8 +44,10 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.netty.NettyChannelBuilder;
 
 public class MagicDrawModel extends CachedModel<MDModelElement> {
+	private static final Logger LOGGER = LoggerFactory.getLogger(MagicDrawModel.class);
+	
 	private static final int HAS_TYPE_CACHE_SIZE = 100;
-	private final LoadingCache<String, Boolean> hasTypeCache = CacheBuilder.newBuilder()
+	private final LoadingCache<String, Optional<ModelElementType>> getTypeCache = CacheBuilder.newBuilder()
 			.maximumSize(HAS_TYPE_CACHE_SIZE)
 			.build(new HasTypeCacheLoader());
 
@@ -78,7 +84,7 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 		client = ModelServiceGrpc.newBlockingStub(channel);
 
 		// Invalidate all caches
-		hasTypeCache.invalidateAll();
+		getTypeCache.invalidateAll();
 	}
 
 	@Override
@@ -125,13 +131,14 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 
 	@Override
 	public boolean isInstantiable(String type) {
-		// TODO Auto-generated method stub
-		return false;
+		return getTypeCache.getUnchecked(type)
+			.map(e -> !e.getIsAbstract())
+			.orElse(false);
 	}
 
 	@Override
 	public boolean hasType(String type) {
-		return hasTypeCache.getUnchecked(type);
+		return getTypeCache.getUnchecked(type).isPresent();
 	}
 
 	@Override
@@ -207,8 +214,10 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 
 	@Override
 	protected Object getCacheKeyForType(String type) throws EolModelElementTypeNotFoundException {
-		// TODO Auto-generated method stub
-		return null;
+		// Tries to map the type reference to the fully qualified version of the name
+		return getTypeCache.getUnchecked(type)
+			.map(e -> e.getTypeName())
+			.orElse(type);
 	}
 
 	@Override
@@ -217,11 +226,17 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 		return null;
 	}
 
-	private class HasTypeCacheLoader extends CacheLoader<String, Boolean> {
+	private class HasTypeCacheLoader extends CacheLoader<String, Optional<ModelElementType>> {
 		@Override
-		public Boolean load(String type) {
-			HasTypeRequest request = HasTypeRequest.newBuilder().setTypeName(type).build();
-			return client.hasType(request).getHasType();
+		public Optional<ModelElementType> load(String type) {
+			GetTypeRequest request = GetTypeRequest.newBuilder().setTypeName(type).build();
+			try {
+				ModelElementType result = client.getType(request);
+				return Optional.of(result);
+			} catch (StatusRuntimeException ex) {
+				LOGGER.warn("Error while fetching type", ex);
+				return Optional.empty();
+			}
 		}
 	}
 }

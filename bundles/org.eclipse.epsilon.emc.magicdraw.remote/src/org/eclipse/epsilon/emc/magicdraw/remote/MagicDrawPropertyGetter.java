@@ -8,7 +8,7 @@
  * Contributors:
  *    Antonio Garcia-Dominguez - initial API and implementation
  *******************************************************************************/
-package org.eclipse.epsilon.emc.magicdraw;
+package org.eclipse.epsilon.emc.magicdraw.remote;
 
 import java.util.ArrayList;
 import java.util.List;

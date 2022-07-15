@@ -8,7 +8,7 @@
  * Contributors:
  *    Antonio Garcia-Dominguez - initial API and implementation
  *******************************************************************************/
-package org.eclipse.epsilon.emc.magicdraw.tests;
+package org.eclipse.epsilon.emc.magicdraw.remote;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -17,9 +17,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
 
-import org.eclipse.epsilon.emc.magicdraw.MDEnumerationLiteral;
-import org.eclipse.epsilon.emc.magicdraw.MDModelElement;
-import org.eclipse.epsilon.emc.magicdraw.MagicDrawModel;
 import org.eclipse.epsilon.eol.EolModule;
 import org.eclipse.epsilon.eol.exceptions.models.EolEnumerationValueNotFoundException;
 import org.eclipse.epsilon.eol.exceptions.models.EolModelLoadingException;
@@ -102,6 +99,17 @@ public class ZooModelTest {
 	@Test
 	public void byID() {
 		assertEquals("uml::Class", ((MDModelElement) m.getElementById("_2021x_2_71601c9_1657191783184_130536_1323")).getTypeName());
+	}
+
+	@Test
+	public void isInstantiable() {
+		assertTrue("uml::Class should be instantiable", m.isInstantiable("uml::Class"));
+		assertFalse("ActivityNode is abstract, so it should not be instantiable", m.isInstantiable("ActivityNode"));
+	}
+
+	@Test
+	public void cacheKeyForType() throws Exception {
+		assertEquals("uml::Class", m.getCacheKeyForType("Class"));
 	}
 
 	@Before
