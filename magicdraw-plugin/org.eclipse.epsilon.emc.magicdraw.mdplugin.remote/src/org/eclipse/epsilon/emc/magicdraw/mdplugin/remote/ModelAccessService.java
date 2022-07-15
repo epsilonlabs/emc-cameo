@@ -28,6 +28,8 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfKindRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.BooleanCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.DoubleCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetFeatureValueRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.HasTypeRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.HasTypeResponse;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.IntegerCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementCollection;
@@ -231,6 +233,13 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		} else {
 			vBuilder.setReferenceValue(encodeModelElement((MDObject) rawValue));
 		}
+	}
+
+	@Override
+	public void hasType(HasTypeRequest request, StreamObserver<HasTypeResponse> responseObserver) {
+		EClassifier eClassifier = findEClassifier(request.getMetamodelUri(), request.getTypeName());
+		responseObserver.onNext(HasTypeResponse.newBuilder().setHasType(eClassifier != null).build());
+		responseObserver.onCompleted();
 	}
 
 }

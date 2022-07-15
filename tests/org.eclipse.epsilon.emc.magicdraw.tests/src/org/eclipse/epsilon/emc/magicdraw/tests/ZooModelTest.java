@@ -11,6 +11,8 @@
 package org.eclipse.epsilon.emc.magicdraw.tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.eclipse.epsilon.emc.magicdraw.MagicDrawModel;
 import org.eclipse.epsilon.eol.EolModule;
@@ -18,12 +20,12 @@ import org.eclipse.epsilon.eol.exceptions.models.EolModelLoadingException;
 import org.junit.Test;
 
 /**
- * Tests for MagicDraw model loading and saving.
+ * Tests for MagicDraw model loading and saving, with MagicDraw running on the <code>resources/example-zoo.mdzip</code> project.
  */
-public class MagicDrawModelTest {
+public class ZooModelTest {
 
 	@Test
-	public void zoo() throws Exception {
+	public void zooClassCount() throws Exception {
 		try (MagicDrawModel m = createZooModel()) {
 			assertEquals("4 classes should be visible from the sample Zoo model", 4, m.getAllOfKind("Class").size());
 		}
@@ -34,8 +36,17 @@ public class MagicDrawModelTest {
 		try (MagicDrawModel m = createZooModel()) {
 			EolModule module = new EolModule();
 			module.getContext().getModelRepository().addModel(m);
-			module.parse("for (c in Class.all) { (c.name + ' is really a ' + c.typeName).println(); }");
+			module.parse("for (c in Class.all) { (c.name + ' is really a ' + c.metamodelUri + '::' + c.typeName).println(); }");
 			module.execute();
+		}
+	}
+
+	@Test
+	public void zooHasTypes() throws Exception {
+		try (MagicDrawModel m = createZooModel()) {
+			assertTrue("Should have the Class type", m.hasType("Class"));
+			assertTrue("Using namespace::type should work", m.hasType("http://www.nomagic.com/magicdraw/UML/2.5.1.1::Class"));
+			assertFalse("Should not have the missing type", m.hasType("DoesNotExist"));
 		}
 	}
 

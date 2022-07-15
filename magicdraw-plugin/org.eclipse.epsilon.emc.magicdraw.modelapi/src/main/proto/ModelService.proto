@@ -59,7 +59,17 @@ message GetFeatureValueRequest {
     string featureName = 2;
 }
 
+message HasTypeRequest {
+    string metamodelUri = 1;
+    string typeName = 2;
+}
+
+message HasTypeResponse {
+    bool hasType = 1;
+}
+
 service ModelService {
     rpc allOfKind(AllOfKindRequest) returns (ModelElementCollection);
     rpc getFeatureValue(GetFeatureValueRequest) returns (Value);
+    rpc hasType(HasTypeRequest) returns (HasTypeResponse);
 }

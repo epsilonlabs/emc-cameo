@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfKindRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.HasTypeRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceGrpc;
@@ -27,10 +28,18 @@ import org.eclipse.epsilon.eol.exceptions.models.EolModelLoadingException;
 import org.eclipse.epsilon.eol.exceptions.models.EolNotInstantiableModelElementTypeException;
 import org.eclipse.epsilon.eol.models.CachedModel;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+
 import io.grpc.ManagedChannel;
 import io.grpc.netty.NettyChannelBuilder;
 
 public class MagicDrawModel extends CachedModel<MDModelElement> {
+	private static final int HAS_TYPE_CACHE_SIZE = 100;
+	private final LoadingCache<String, Boolean> hasTypeCache = CacheBuilder.newBuilder()
+			.maximumSize(HAS_TYPE_CACHE_SIZE)
+			.build(new HasTypeCacheLoader());
 
 	private ManagedChannel channel;
 	private ModelServiceBlockingStub client;
@@ -60,9 +69,12 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 
 	@Override
 	protected void loadModel() throws EolModelLoadingException {
-		// Test out gRPC
+		// Connect to MagicDraw
 		channel = NettyChannelBuilder.forAddress(new InetSocketAddress("localhost", 8123)).usePlaintext().build();
 		client = ModelServiceGrpc.newBlockingStub(channel);
+
+		// Invalidate all caches
+		hasTypeCache.invalidateAll();
 	}
 
 	@Override
@@ -94,7 +106,7 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 
 	@Override
 	public boolean owns(Object instance) {
-		return instance instanceof MDModelElement && ((MDModelElement)instance).getModel() == this;
+		return instance instanceof MDModelElement && ((MDModelElement) instance).getModel() == this;
 	}
 
 	@Override
@@ -105,9 +117,7 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 
 	@Override
 	public boolean hasType(String type) {
-		// TODO need API to ask server for registered models
-
-		return true;
+		return hasTypeCache.getUnchecked(type);
 	}
 
 	@Override
@@ -130,22 +140,22 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	}
 
 	@Override
-	protected Collection<MDModelElement> getAllOfKindFromModel(String kind) throws EolModelElementTypeNotFoundException {
+	protected Collection<MDModelElement> getAllOfKindFromModel(String kind)
+			throws EolModelElementTypeNotFoundException {
 		AllOfKindRequest request;
 		String[] parts = kind.split("::");
 		if (parts.length > 1) {
 			request = AllOfKindRequest.newBuilder()
 				.setMetamodelUri(parts[0])
 				.setTypeName(parts[1])
-				.setRootElementHyperlink(rootElementHyperlink)
-				.build();
+				.setRootElementHyperlink(rootElementHyperlink).build();
 		} else {
 			request = AllOfKindRequest.newBuilder()
 				.setTypeName(parts[0])
 				.setRootElementHyperlink(rootElementHyperlink)
 				.build();
 		}
-		
+
 		ModelElementCollection response = client.allOfKind(request);
 		List<MDModelElement> elements = new ArrayList<>(response.getValuesCount());
 		for (ModelElement e : response.getValuesList()) {
@@ -156,7 +166,8 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	}
 
 	@Override
-	protected MDModelElement createInstanceInModel(String type) throws EolModelElementTypeNotFoundException, EolNotInstantiableModelElementTypeException {
+	protected MDModelElement createInstanceInModel(String type)
+			throws EolModelElementTypeNotFoundException, EolNotInstantiableModelElementTypeException {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -190,4 +201,23 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 		return null;
 	}
 
+	private class HasTypeCacheLoader extends CacheLoader<String, Boolean> {
+		@Override
+		public Boolean load(String type) {
+			HasTypeRequest request;
+			String[] parts = type.split("::");
+			if (parts.length > 1) {
+				request = HasTypeRequest.newBuilder()
+					.setMetamodelUri(parts[0])
+					.setTypeName(parts[1])
+					.build();
+			} else {
+				request = HasTypeRequest.newBuilder()
+					.setTypeName(parts[0])
+					.build();
+			}
+
+			return client.hasType(request).getHasType();
+		}
+	}
 }
