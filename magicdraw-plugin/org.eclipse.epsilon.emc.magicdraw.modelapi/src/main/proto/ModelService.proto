@@ -48,15 +48,14 @@ message Value {
 }
 
 message AllOfRequest {
-    // NOTE: if both of these are omitted, we ask for the entire contents of the model
-    string metamodelUri = 1;
-    string typeName = 2;
+    // If this is omitted, we ask for the entire contents of the model
+    string typeName = 1;
 
     // Limits the scope of the request to the proper contents of this element
-    string rootElementHyperlink = 3;
+    string rootElementHyperlink = 2;
 
     // If true and a type is specified, only exact matches of this type are fetched
-    bool onlyExactType = 4;
+    bool onlyExactType = 3;
 }
 
 message GetFeatureValueRequest {
@@ -65,8 +64,7 @@ message GetFeatureValueRequest {
 }
 
 message HasTypeRequest {
-    string metamodelUri = 1;
-    string typeName = 2;
+    string typeName = 1;
 }
 
 message HasTypeResponse {

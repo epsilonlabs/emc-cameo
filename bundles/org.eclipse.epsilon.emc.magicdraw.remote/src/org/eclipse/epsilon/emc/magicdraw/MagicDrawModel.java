@@ -148,22 +148,11 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	}
 
 	private Collection<MDModelElement> getAllOfFromModel(String type, boolean onlyExactType) {
-		AllOfRequest request;
-		String[] parts = type.split("::");
-		if (parts.length > 1) {
-			request = AllOfRequest.newBuilder()
-				.setMetamodelUri(parts[0])
-				.setTypeName(parts[1])
-				.setRootElementHyperlink(rootElementHyperlink)
-				.setOnlyExactType(onlyExactType)
-				.build();
-		} else {
-			request = AllOfRequest.newBuilder()
-				.setTypeName(parts[0])
-				.setRootElementHyperlink(rootElementHyperlink)
-				.setOnlyExactType(onlyExactType)
-				.build();
-		}
+		AllOfRequest request = AllOfRequest.newBuilder()
+			.setTypeName(type)
+			.setRootElementHyperlink(rootElementHyperlink)
+			.setOnlyExactType(onlyExactType)
+			.build();
 
 		return getAllOfFromModel(request);
 	}
@@ -217,19 +206,7 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	private class HasTypeCacheLoader extends CacheLoader<String, Boolean> {
 		@Override
 		public Boolean load(String type) {
-			HasTypeRequest request;
-			String[] parts = type.split("::");
-			if (parts.length > 1) {
-				request = HasTypeRequest.newBuilder()
-					.setMetamodelUri(parts[0])
-					.setTypeName(parts[1])
-					.build();
-			} else {
-				request = HasTypeRequest.newBuilder()
-					.setTypeName(parts[0])
-					.build();
-			}
-
+			HasTypeRequest request = HasTypeRequest.newBuilder().setTypeName(type).build();
 			return client.hasType(request).getHasType();
 		}
 	}

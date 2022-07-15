@@ -11,9 +11,13 @@
 package org.eclipse.epsilon.emc.magicdraw.mdplugin.remote;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -28,6 +32,8 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.BooleanCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.DoubleCollection;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueResponse;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetFeatureValueRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.HasTypeRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.HasTypeResponse;
@@ -65,7 +71,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 
 		EClassifier eClassifier;
 		if (request.getTypeName() != null && request.getTypeName().length() > 0) {
-			eClassifier = findEClassifier(request.getMetamodelUri(), request.getTypeName());
+			eClassifier = findEClassifier(request.getTypeName());
 			if (eClassifier == null) {
 				responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
 				return;
@@ -127,36 +133,95 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		return ModelElement.newBuilder()
 				.setElementID(eob.getID())
 				.setMetamodelUri(eob.eClass().getEPackage().getNsURI())
-				.setTypeName(eob.eClass().getName())
+				.setTypeName(getFullyQualifiedName(eob.eClass()))
 				.build();
 	}
 
-	private EClassifier findEClassifier(String metamodelUri, String typeName) {
-		if (metamodelUri != null && !metamodelUri.isEmpty()) {
-			EPackage pkg = EPackage.Registry.INSTANCE.getEPackage(metamodelUri);
-			EClassifier eClassifier = pkg.getEClassifier(typeName);
+	private String getFullyQualifiedName(EClassifier eClass) {
+		List<String> parts = new ArrayList<>();
+		parts.add(eClass.getName());
+		for (EPackage pkg = eClass.getEPackage(); pkg != null; pkg = pkg.getESuperPackage()) {
+			parts.add(pkg.getName());
+		}
+
+		StringBuilder sb = new StringBuilder();
+		boolean first = true;
+		for (ListIterator<String> it = parts.listIterator(parts.size()); it.hasPrevious(); ) {
+			if (first) {
+				first = false;
+			} else {
+				sb.append("::");
+			}
+			sb.append(it.previous());
+		}
+
+		return sb.toString();
+	}
+
+	private EClassifier findEClassifier(String typeName) {
+		final List<String> parts = Arrays.asList(typeName.split("::"));
+		if (parts.size() > 1) {
+			final EClassifier eClassifier = findEClassifierAbsolute(parts, getRootEPackages());
 			if (eClassifier == null) {
-				LOGGER.warn(String.format("Cannot find type '%s::%s'", metamodelUri, typeName));
+				LOGGER.warn(String.format("Cannot find type '%s'", typeName));
 			}
 			return eClassifier;
 		} else {
-			List<EClassifier> options = new ArrayList<>();
-			for (Object oPkg : EPackage.Registry.INSTANCE.values()) {
-				EClassifier option = ((EPackage) oPkg).getEClassifier(typeName);
-				if (option != null) {
-					options.add(option);
-				}
-			}
+			final Set<EClassifier> options = new HashSet<>();
+			findEClassifierByName(parts.get(0), getRootEPackages(), options);
 
 			if (options.size() == 0) {
 				LOGGER.warn(String.format("Cannot find type '%s'", typeName));
 				return null;
 			} else if (options.size() > 1) {
-				List<String> nsURIs = options.stream().map(e -> e.getEPackage().getNsURI()).collect(Collectors.toList());
-				LOGGER.warn(String.format("Type '%s' is ambiguous (available in multiple nsURIs: %s)", typeName, nsURIs));
+				List<String> nsURIs = options.stream().map(e -> getFullyQualifiedName(e) + " from " + e.getEPackage()).collect(Collectors.toList());
+				LOGGER.warn(String.format("Type '%s' is ambiguous (options: %s)", typeName, nsURIs));
 			}
-			return options.get(0);
+			return options.iterator().next();
 		}
+	}
+
+	private void findEClassifierByName(String name, Iterable<EPackage> scope, Collection<EClassifier> options) {
+		for (EPackage pkg : scope) {
+			EClassifier eClassifier = pkg.getEClassifier(name);
+			if (eClassifier != null) {
+				options.add(eClassifier);
+			}
+			findEClassifierByName(name, pkg.getESubpackages(), options);
+		}
+	}
+
+	private Iterable<EPackage> getRootEPackages() {
+		return () -> EPackage.Registry.INSTANCE.values()
+			.stream()
+			.filter(pkg -> (pkg instanceof EPackage))
+			.map(pkg -> (EPackage) pkg).iterator();
+	}
+
+	private EClassifier findEClassifierAbsolute(List<String> parts, Iterable<EPackage> scope) {
+		assert parts.size() > 1;
+
+		for (EPackage pkg : scope) {
+			if (parts.get(0).equals(pkg.getName())) {
+				if (parts.size() == 2) {
+					// Second part is just the classifier name
+					EClassifier eClassifier = pkg.getEClassifier(parts.get(1));
+					if (eClassifier != null) {
+						return eClassifier;
+					}
+				} else {
+					EClassifier eClassifier = findEClassifierAbsolute(
+						parts.subList(1, parts.size()),
+						pkg.getESubpackages()
+					);
+					if (eClassifier != null) {
+						return eClassifier;
+					}
+				}
+			}
+		}
+
+		return null;
 	}
 
 	@Override
@@ -179,7 +244,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		final EStructuralFeature eFeature = mdObject.eClass().getEStructuralFeature(request.getFeatureName());
 		if (eFeature == null) {
 			vBuilder.setNotDefined(true);
-			LOGGER.warn(String.format("Feature '%s' is not defined for element type '%s::%s'", request.getFeatureName(), mdObject.eClass().getEPackage().getNsURI(), mdObject.eClass().getName()));
+			LOGGER.warn(String.format("Feature '%s' is not defined for element type '%s'", request.getFeatureName(), getFullyQualifiedName(mdObject.eClass())));
 		} else {
 			final Object rawValue = mdObject.eGet(eFeature);
 			if (rawValue != null) {
@@ -259,7 +324,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 
 	@Override
 	public void hasType(HasTypeRequest request, StreamObserver<HasTypeResponse> responseObserver) {
-		EClassifier eClassifier = findEClassifier(request.getMetamodelUri(), request.getTypeName());
+		EClassifier eClassifier = findEClassifier(request.getTypeName());
 		responseObserver.onNext(HasTypeResponse.newBuilder().setHasType(eClassifier != null).build());
 		responseObserver.onCompleted();
 	}

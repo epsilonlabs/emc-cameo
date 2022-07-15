@@ -47,7 +47,7 @@ public class ZooModelTest {
 
 		int nClasses = 0;
 		for (MDModelElement e : contents) {
-			if ("Class".equals(e.getTypeName())) {
+			if ("uml::Class".equals(e.getTypeName())) {
 				++nClasses;
 			}
 		}
@@ -60,15 +60,15 @@ public class ZooModelTest {
 	public void classNames() throws Exception {
 		EolModule module = new EolModule();
 		module.getContext().getModelRepository().addModel(m);
-		module.parse("return Class.all.collect(c | c.name + ' is a ' + c.metamodelUri + '::' + c.typeName).sortBy(s|s).first;");
+		module.parse("return Class.all.collect(c | c.name + ' is a ' + c.typeName + ' from ' + c.metamodelUri).sortBy(s|s).first;");
 		String firstClass = (String) module.execute();
-		assertEquals("Animal is a http://www.nomagic.com/magicdraw/UML/2.5.1.1::Class", firstClass);
+		assertEquals("Animal is a uml::Class from http://www.nomagic.com/magicdraw/UML/2.5.1.1", firstClass);
 	}
 
 	@Test
 	public void hasType() throws Exception {
 		assertTrue("Should have the Class type", m.hasType("Class"));
-		assertTrue("Using namespace::type should work", m.hasType("http://www.nomagic.com/magicdraw/UML/2.5.1.1::Class"));
+		assertTrue("Using package::type should work", m.hasType("uml::Class"));
 		assertFalse("Should not have the missing type", m.hasType("DoesNotExist"));
 	}
 
