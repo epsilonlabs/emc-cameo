@@ -173,7 +173,7 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	private Collection<MDModelElement> getAllOfFromModel(String type, boolean onlyExactType) {
 		AllOfRequest request = AllOfRequest.newBuilder()
 			.setTypeName(type)
-			.setRootElementHyperlink(rootElementHyperlink)
+			.setRootElementHyperlink(rootElementHyperlink == null ? "" : rootElementHyperlink)
 			.setOnlyExactType(onlyExactType)
 			.build();
 

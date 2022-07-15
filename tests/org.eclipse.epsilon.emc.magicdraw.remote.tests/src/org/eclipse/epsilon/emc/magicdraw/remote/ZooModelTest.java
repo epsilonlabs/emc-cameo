@@ -39,6 +39,8 @@ public class ZooModelTest {
 		assertEquals("5 Class objects (including subtypes) should be visible from the sample Zoo model", 5, m.getAllOfKind("Class").size());
 		assertEquals("4 Class objects (exact type) should be visible from the sample Zoo model", EXPECTED_CLASSES, m.getAllOfType("Class").size());
 
+		// We can omit the root element hyperlink (it'll be the primary model in that case)
+		m.setRootElementHyperlink(null);
 		assertEquals("1 ProtocolStateMachine object (including subtypes) should be visible from the sample Zoo model", 1, m.getAllOfKind("ProtocolStateMachine").size());
 		assertEquals("1 ProtocolStateMachine object (exact type) should be visible from the sample Zoo model", 1, m.getAllOfType("ProtocolStateMachine").size());
 	}
