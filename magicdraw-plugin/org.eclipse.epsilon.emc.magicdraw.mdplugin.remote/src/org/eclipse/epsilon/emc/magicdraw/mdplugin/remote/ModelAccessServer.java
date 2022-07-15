@@ -25,7 +25,7 @@ import io.grpc.ServerBuilder;
 public class ModelAccessServer {
 
 	public static final int DEFAULT_PORT = 8123;
-	static final Logger LOGGER = LoggerFactory.getLogger(ModelAccessServer.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ModelAccessServer.class);
 
 	private final int port;
 	private final Server server;

@@ -34,13 +34,14 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceGrpc;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.StringCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.foundation.MDObject;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.magicdraw.uml.Finder;
-import com.teamdev.jxbrowser.logging.Logger;
 
 import io.grpc.Status;
 import io.grpc.Status.Code;
@@ -48,12 +49,14 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 
 public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ModelAccessService.class);
+	
 	@Override
 	public void allOfKind(AllOfKindRequest request, StreamObserver<ModelElementCollection> responseObserver) {
 		Project project = Application.getInstance().getProject();
 		if (project == null) {
 			responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.FAILED_PRECONDITION)));
-			ModelAccessServer.LOGGER.error("Project is not open yet");
+			LOGGER.warn("Project is not open yet");
 			return;
 		}
 
@@ -70,11 +73,11 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		} else {
 			BaseElement element = Finder.byHyperlink().find(project, rootElementHyperlink);
 			if (element == null) {
-				Logger.error(String.format("Could not find element with URI %s", rootElementHyperlink));
+				LOGGER.warn(String.format("Could not find element with URI %s", rootElementHyperlink));
 				responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
 				return;
 			} else if (!(element instanceof EObject)) {
-				Logger.error(String.format("Element with URI %s is not an EObject", rootElementHyperlink));
+				LOGGER.warn(String.format("Element with URI %s is not an EObject", rootElementHyperlink));
 				responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
 				return;
 			} else {
@@ -109,7 +112,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 			EPackage pkg = EPackage.Registry.INSTANCE.getEPackage(metamodelUri);
 			EClassifier eClassifier = pkg.getEClassifier(typeName);
 			if (eClassifier == null) {
-				ModelAccessServer.LOGGER.error(String.format("Cannot find type '%s::%s'", metamodelUri, typeName));
+				LOGGER.warn(String.format("Cannot find type '%s::%s'", metamodelUri, typeName));
 			}
 			return eClassifier;
 		} else {
@@ -122,11 +125,11 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 			}
 
 			if (options.size() == 0) {
-				ModelAccessServer.LOGGER.error(String.format("Cannot find type '%s'", typeName));
+				LOGGER.warn(String.format("Cannot find type '%s'", typeName));
 				return null;
 			} else if (options.size() > 1) {
 				List<String> nsURIs = options.stream().map(e -> e.getEPackage().getNsURI()).collect(Collectors.toList());
-				ModelAccessServer.LOGGER.warn(String.format("Type '%s' is ambiguous (available in multiple nsURIs: %s)", typeName, nsURIs));
+				LOGGER.warn(String.format("Type '%s' is ambiguous (available in multiple nsURIs: %s)", typeName, nsURIs));
 			}
 			return options.get(0);
 		}
@@ -137,14 +140,14 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		Project project = Application.getInstance().getProject();
 		if (project == null) {
 			responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.FAILED_PRECONDITION)));
-			ModelAccessServer.LOGGER.error("Project is not open yet");
+			LOGGER.warn("Project is not open yet");
 			return;
 		}
 
 		final MDObject mdObject = (MDObject) project.getElementByID(request.getElementID());
 		if (mdObject == null) {
 			responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
-			ModelAccessServer.LOGGER.error(String.format("No object exists with ID '%s'", request.getElementID()));
+			LOGGER.warn(String.format("No object exists with ID '%s'", request.getElementID()));
 			return;
 		}
 
@@ -152,7 +155,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		final EStructuralFeature eFeature = mdObject.eClass().getEStructuralFeature(request.getFeatureName());
 		if (eFeature == null) {
 			vBuilder.setNotDefined(true);
-			ModelAccessServer.LOGGER.warn(String.format("Feature '%s' is not defined for element type '%s::%s'", request.getFeatureName(), mdObject.eClass().getEPackage().getNsURI(), mdObject.eClass().getName()));
+			LOGGER.warn(String.format("Feature '%s' is not defined for element type '%s::%s'", request.getFeatureName(), mdObject.eClass().getEPackage().getNsURI(), mdObject.eClass().getName()));
 		} else {
 			final Object rawValue = mdObject.eGet(eFeature);
 			if (rawValue != null) {
@@ -161,7 +164,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 				} else if (eFeature instanceof EAttribute) {
 					encodeAttribute(eFeature, vBuilder, rawValue);
 				} else {
-					ModelAccessServer.LOGGER.error(String.format("Unknown feature type '%s'", eFeature.eClass().getName()));
+					LOGGER.warn(String.format("Unknown feature type '%s'", eFeature.eClass().getName()));
 					responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
 				}
 			}
