@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.GetElementByIDRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueResponse;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.HasTypeRequest;
@@ -102,8 +103,9 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 
 	@Override
 	public Object getElementById(String id) {
-		// TODO Auto-generated method stub
-		return null;
+		final GetElementByIDRequest request = GetElementByIDRequest.newBuilder().setElementID(id).build();
+		final ModelElement response = client.getElementByID(request);
+		return new MDModelElement(this, response);
 	}
 
 	@Override

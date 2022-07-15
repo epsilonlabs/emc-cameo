@@ -35,6 +35,7 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.BooleanCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.DoubleCollection;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.GetElementByIDRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueResponse;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetFeatureValueRequest;
@@ -370,6 +371,31 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 				.build();
 
 			responseObserver.onNext(response);
+			responseObserver.onCompleted();
+		}
+	}
+
+	@Override
+	public void getElementByID(GetElementByIDRequest request, StreamObserver<ModelElement> responseObserver) {
+		Project project = Application.getInstance().getProject();
+		if (project == null) {
+			responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.FAILED_PRECONDITION)));
+			LOGGER.warn("Project is not open yet");
+			return;
+		}
+
+		final String id = request.getElementID();
+		final BaseElement element = project.getElementByID(id);
+		if (element == null) {
+			LOGGER.warn(String.format("Could not find element with ID %s", id));
+			responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
+			return;
+		} else if (!(element instanceof MDObject)) {
+			LOGGER.warn(String.format("Element with ID %s is not an MDObject", id));
+			responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
+			return;
+		} else {
+			responseObserver.onNext(encodeModelElement((MDObject) element));
 			responseObserver.onCompleted();
 		}
 	}

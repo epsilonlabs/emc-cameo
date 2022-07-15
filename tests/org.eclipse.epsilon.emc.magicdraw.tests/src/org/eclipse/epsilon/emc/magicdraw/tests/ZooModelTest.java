@@ -99,6 +99,11 @@ public class ZooModelTest {
 		m.getEnumerationValue("something", "else");
 	}
 
+	@Test
+	public void byID() {
+		assertEquals("uml::Class", ((MDModelElement) m.getElementById("_2021x_2_71601c9_1657191783184_130536_1323")).getTypeName());
+	}
+
 	@Before
 	public void createZooModel() throws EolModelLoadingException {
 		m = new MagicDrawModel();
