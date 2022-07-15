@@ -64,7 +64,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		}
 
 		EClassifier eClassifier;
-		if (request.getTypeName() != null) {
+		if (request.getTypeName() != null && request.getTypeName().length() > 0) {
 			eClassifier = findEClassifier(request.getMetamodelUri(), request.getTypeName());
 			if (eClassifier == null) {
 				responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));

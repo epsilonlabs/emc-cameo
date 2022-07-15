@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.epsilon.emc.magicdraw;
 
+import java.util.Objects;
+
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 
 public class MDModelElement {
@@ -46,4 +48,28 @@ public class MDModelElement {
 		return elementID;
 	}
 
+	@Override
+	public int hashCode() {
+		return Objects.hash(elementID, metamodelUri, model, typeName);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		MDModelElement other = (MDModelElement) obj;
+		return Objects.equals(elementID, other.elementID) && Objects.equals(metamodelUri, other.metamodelUri)
+				&& Objects.equals(model, other.model) && Objects.equals(typeName, other.typeName);
+	}
+
+	@Override
+	public String toString() {
+		return "MDModelElement [typeName=" + typeName + ", metamodelUri=" + metamodelUri + ", elementID=" + elementID + "]";
+	}
+
+	
 }

@@ -128,8 +128,11 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 
 	@Override
 	protected Collection<MDModelElement> allContentsFromModel() {
-		// TODO Auto-generated method stub
-		return null;
+		final AllOfRequest request = AllOfRequest.newBuilder()
+			.setRootElementHyperlink(rootElementHyperlink)
+			.build();
+
+		return getAllOfFromModel(request);
 	}
 
 	@Override
@@ -162,6 +165,10 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 				.build();
 		}
 
+		return getAllOfFromModel(request);
+	}
+
+	private Collection<MDModelElement> getAllOfFromModel(AllOfRequest request) {
 		ModelElementCollection response = client.allOf(request);
 		List<MDModelElement> elements = new ArrayList<>(response.getValuesCount());
 		for (ModelElement e : response.getValuesList()) {
