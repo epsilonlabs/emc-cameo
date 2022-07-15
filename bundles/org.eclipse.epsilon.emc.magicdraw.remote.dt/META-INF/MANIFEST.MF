@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Epsilon EMC Driver for MagicDraw Developer Tools
+Bundle-SymbolicName: org.eclipse.epsilon.emc.magicdraw.remote.dt;singleton:=true
+Bundle-Version: 2.4.0.qualifier
+Bundle-Vendor: Eclipse.org
+Automatic-Module-Name: org.eclipse.epsilon.emc.magicdraw.remote.dt
+Bundle-RequiredExecutionEnvironment: JavaSE-11
+Require-Bundle: org.eclipse.epsilon.emc.magicdraw.remote;bundle-version="2.4.0",
+ org.eclipse.epsilon.common.dt;bundle-version="2.4.0"
