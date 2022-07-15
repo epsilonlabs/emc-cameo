@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfKindRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.HasTypeRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementCollection;
@@ -135,28 +135,34 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	@Override
 	protected Collection<MDModelElement> getAllOfTypeFromModel(String type)
 			throws EolModelElementTypeNotFoundException {
-		// TODO Need to implement exact type finding in server
-		return getAllOfKindFromModel(type);
+		return getAllOfFromModel(type, true);
 	}
 
 	@Override
 	protected Collection<MDModelElement> getAllOfKindFromModel(String kind)
 			throws EolModelElementTypeNotFoundException {
-		AllOfKindRequest request;
-		String[] parts = kind.split("::");
+		return getAllOfFromModel(kind, false);
+	}
+
+	private Collection<MDModelElement> getAllOfFromModel(String type, boolean onlyExactType) {
+		AllOfRequest request;
+		String[] parts = type.split("::");
 		if (parts.length > 1) {
-			request = AllOfKindRequest.newBuilder()
+			request = AllOfRequest.newBuilder()
 				.setMetamodelUri(parts[0])
 				.setTypeName(parts[1])
-				.setRootElementHyperlink(rootElementHyperlink).build();
+				.setRootElementHyperlink(rootElementHyperlink)
+				.setOnlyExactType(onlyExactType)
+				.build();
 		} else {
-			request = AllOfKindRequest.newBuilder()
+			request = AllOfRequest.newBuilder()
 				.setTypeName(parts[0])
 				.setRootElementHyperlink(rootElementHyperlink)
+				.setOnlyExactType(onlyExactType)
 				.build();
 		}
 
-		ModelElementCollection response = client.allOfKind(request);
+		ModelElementCollection response = client.allOf(request);
 		List<MDModelElement> elements = new ArrayList<>(response.getValuesCount());
 		for (ModelElement e : response.getValuesList()) {
 			elements.add(new MDModelElement(this, e));

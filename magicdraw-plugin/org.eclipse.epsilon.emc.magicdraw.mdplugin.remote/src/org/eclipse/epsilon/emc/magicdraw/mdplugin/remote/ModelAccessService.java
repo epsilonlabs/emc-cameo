@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.eclipse.emf.common.util.TreeIterator;
@@ -24,7 +25,7 @@ import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfKindRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.BooleanCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.DoubleCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetFeatureValueRequest;
@@ -54,7 +55,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ModelAccessService.class);
 	
 	@Override
-	public void allOfKind(AllOfKindRequest request, StreamObserver<ModelElementCollection> responseObserver) {
+	public void allOf(AllOfRequest request, StreamObserver<ModelElementCollection> responseObserver) {
 		Project project = Application.getInstance().getProject();
 		if (project == null) {
 			responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.FAILED_PRECONDITION)));
@@ -62,10 +63,15 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 			return;
 		}
 
-		EClassifier eClassifier = findEClassifier(request.getMetamodelUri(), request.getTypeName());
-		if (eClassifier == null) {
-			responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
-			return;
+		EClassifier eClassifier;
+		if (request.getTypeName() != null) {
+			eClassifier = findEClassifier(request.getMetamodelUri(), request.getTypeName());
+			if (eClassifier == null) {
+				responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
+				return;
+			}
+		} else {
+			eClassifier = null;
 		}
 
 		EObject root;
@@ -87,18 +93,34 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 			}
 		}
 
-		ModelElementCollection.Builder builder = ModelElementCollection.newBuilder();
-		for (TreeIterator<EObject> it = EcoreUtil.getAllProperContents(root, true); it.hasNext();) {
-			EObject eob = it.next();
+		final ModelElementCollection allOfResponse = getAllOf(eClassifier, root, request.getOnlyExactType());
+		responseObserver.onNext(allOfResponse);
+		responseObserver.onCompleted();
+	}
 
-			// NOTE: some are EObjects but not MDObjects (??)
-			if (eob instanceof MDObject && eClassifier.isInstance(eob)) {
+	private ModelElementCollection getAllOf(EClassifier eClassifier, EObject root, final boolean onlyExactType) {
+		final ModelElementCollection.Builder builder = ModelElementCollection.newBuilder();
+		final TreeIterator<EObject> it = EcoreUtil.getAllProperContents(root, true);
+
+		Predicate<EObject> pred;
+		if (eClassifier == null) {
+			pred = (eob) -> eob instanceof MDObject;
+		}
+		else if (onlyExactType) {
+			pred = (eob) -> eob instanceof MDObject && eob.eClass() == eClassifier;
+		}
+		else {
+			pred = (eob) -> eob instanceof MDObject && eClassifier.isInstance(eob);
+		}
+
+		while (it.hasNext()) {
+			EObject eob = it.next();
+			if (pred.test(eob)) {
 				builder.addValues(encodeModelElement((MDObject) eob));
 			}
 		}
 
-		responseObserver.onNext(builder.build());
-		responseObserver.onCompleted();
+		return builder.build();
 	}
 
 	private ModelElement encodeModelElement(MDObject eob) {

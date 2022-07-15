@@ -25,24 +25,29 @@ import org.junit.Test;
 public class ZooModelTest {
 
 	@Test
-	public void zooClassCount() throws Exception {
+	public void allOf() throws Exception {
 		try (MagicDrawModel m = createZooModel()) {
-			assertEquals("4 classes should be visible from the sample Zoo model", 4, m.getAllOfKind("Class").size());
+			assertEquals("5 Class objects (including subtypes) should be visible from the sample Zoo model", 5, m.getAllOfKind("Class").size());
+			assertEquals("4 Class objects (exact type) should be visible from the sample Zoo model", 4, m.getAllOfType("Class").size());
+
+			assertEquals("1 ProtocolStateMachine object (including subtypes) should be visible from the sample Zoo model", 1, m.getAllOfKind("ProtocolStateMachine").size());
+			assertEquals("1 ProtocolStateMachine object (exact type) should be visible from the sample Zoo model", 1, m.getAllOfType("ProtocolStateMachine").size());
 		}
 	}
 
 	@Test
-	public void zooClassNames() throws Exception {
+	public void classNames() throws Exception {
 		try (MagicDrawModel m = createZooModel()) {
 			EolModule module = new EolModule();
 			module.getContext().getModelRepository().addModel(m);
-			module.parse("for (c in Class.all) { (c.name + ' is really a ' + c.metamodelUri + '::' + c.typeName).println(); }");
-			module.execute();
+			module.parse("return Class.all.collect(c | c.name + ' is a ' + c.metamodelUri + '::' + c.typeName).sortBy(s|s).first;");
+			String firstClass = (String) module.execute();
+			assertEquals("Animal is a http://www.nomagic.com/magicdraw/UML/2.5.1.1::Class", firstClass);
 		}
 	}
 
 	@Test
-	public void zooHasTypes() throws Exception {
+	public void hasType() throws Exception {
 		try (MagicDrawModel m = createZooModel()) {
 			assertTrue("Should have the Class type", m.hasType("Class"));
 			assertTrue("Using namespace::type should work", m.hasType("http://www.nomagic.com/magicdraw/UML/2.5.1.1::Class"));

@@ -47,11 +47,16 @@ message Value {
     }
 }
 
-message AllOfKindRequest {
+message AllOfRequest {
+    // NOTE: if both of these are omitted, we ask for the entire contents of the model
     string metamodelUri = 1;
     string typeName = 2;
 
+    // Limits the scope of the request to the proper contents of this element
     string rootElementHyperlink = 3;
+
+    // If true and a type is specified, only exact matches of this type are fetched
+    bool onlyExactType = 4;
 }
 
 message GetFeatureValueRequest {
@@ -69,7 +74,7 @@ message HasTypeResponse {
 }
 
 service ModelService {
-    rpc allOfKind(AllOfKindRequest) returns (ModelElementCollection);
+    rpc allOf(AllOfRequest) returns (ModelElementCollection);
     rpc getFeatureValue(GetFeatureValueRequest) returns (Value);
     rpc hasType(HasTypeRequest) returns (HasTypeResponse);
 }
