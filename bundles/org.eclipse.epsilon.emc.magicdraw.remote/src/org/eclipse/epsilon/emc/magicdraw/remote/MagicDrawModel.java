@@ -13,8 +13,10 @@ package org.eclipse.epsilon.emc.magicdraw.remote;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetElementByIDRequest;
@@ -198,7 +200,6 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	@Override
 	protected void disposeModel() {
 		// TODO Would need to complete editing session if store==true
-
 		if (channel != null) {
 			channel.shutdown();
 			channel = null;
@@ -222,8 +223,16 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 
 	@Override
 	protected Collection<String> getAllTypeNamesOf(Object instance) {
-		// TODO Auto-generated method stub
-		return null;
+		if (instance instanceof MDModelElement) {
+			MDModelElement mdElem = (MDModelElement) instance;
+			return getTypeCache.getUnchecked(mdElem.getTypeName())
+				.map(e -> e.getAllSupertypesList().stream()
+					.map(t -> t.getTypeName())
+					.collect(Collectors.toList()))
+				.orElse(Collections.emptyList());
+		} else {
+			return Collections.emptyList();
+		}
 	}
 
 	private class HasTypeCacheLoader extends CacheLoader<String, Optional<ModelElementType>> {

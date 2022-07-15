@@ -45,6 +45,7 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.IntegerCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementType;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementTypeReference;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceGrpc;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.StringCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
@@ -337,12 +338,21 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		if (options.isEmpty()) return;
 		final EClassifier eClassifier = options.iterator().next();
 
-		final ModelElementType response = ModelElementType.newBuilder()
+		final ModelElementType.Builder builder = ModelElementType.newBuilder()
 			.setMetamodelUri(eClassifier.getEPackage().getNsPrefix())
 			.setTypeName(getFullyQualifiedName(eClassifier))
-			.setIsAbstract(eClassifier instanceof EClass && ((EClass) eClassifier).isAbstract())
-			.build();
-		responseObserver.onNext(response);
+			.setIsAbstract(eClassifier instanceof EClass && ((EClass) eClassifier).isAbstract());
+
+		if (eClassifier instanceof EClass) {
+			for (EClass supertype : ((EClass) eClassifier).getEAllSuperTypes()) {
+				builder.addAllSupertypes(ModelElementTypeReference.newBuilder()
+					.setMetamodelUri(supertype.getEPackage().getNsURI())
+					.setTypeName(getFullyQualifiedName(supertype))
+					.build());
+			}
+		}
+		
+		responseObserver.onNext(builder.build());
 		responseObserver.onCompleted();
 	}
 

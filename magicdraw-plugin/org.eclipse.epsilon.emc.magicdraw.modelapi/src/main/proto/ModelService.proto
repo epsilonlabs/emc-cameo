@@ -9,10 +9,16 @@ message ModelElement {
     string typeName = 3;
 }
 
+message ModelElementTypeReference {
+    string metamodelUri = 1;
+    string typeName = 2;
+}
+
 message ModelElementType {
     string metamodelUri = 1;
     string typeName = 2;
     bool isAbstract = 3;
+    repeated ModelElementTypeReference allSupertypes = 4;
 }
 
 message StringCollection {

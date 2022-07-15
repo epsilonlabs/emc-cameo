@@ -29,7 +29,9 @@ import org.junit.Test;
  * <code>resources/example-zoo.mdzip</code> project.
  */
 public class ZooModelTest {
+	private static final String CLASS_OBJECT_ID = "_2021x_2_71601c9_1657191783184_130536_1323";
 	private static final int EXPECTED_CLASSES = 4;
+
 	private MagicDrawModel m;
 
 	@Test
@@ -98,7 +100,7 @@ public class ZooModelTest {
 
 	@Test
 	public void byID() {
-		assertEquals("uml::Class", ((MDModelElement) m.getElementById("_2021x_2_71601c9_1657191783184_130536_1323")).getTypeName());
+		assertEquals("uml::Class", ((MDModelElement) m.getElementById(CLASS_OBJECT_ID)).getTypeName());
 	}
 
 	@Test
@@ -110,6 +112,12 @@ public class ZooModelTest {
 	@Test
 	public void cacheKeyForType() throws Exception {
 		assertEquals("uml::Class", m.getCacheKeyForType("Class"));
+	}
+
+	@Test
+	public void allTypeNamesOf() throws Exception {
+		final Collection<String> allTypeNamesOf = m.getAllTypeNamesOf(m.getElementById(CLASS_OBJECT_ID));
+		assertTrue(allTypeNamesOf.contains("foundation::MDObject"));
 	}
 
 	@Before
