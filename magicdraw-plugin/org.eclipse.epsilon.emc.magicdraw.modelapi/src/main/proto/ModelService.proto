@@ -3,6 +3,8 @@ option java_multiple_files = true;
 
 package org.eclipse.epsilon.emc.magicdraw.modelapi;
 
+// Entity types
+
 message ModelElement {
     string elementID = 1;
     string metamodelUri = 2;
@@ -59,6 +61,8 @@ message Value {
     }
 }
 
+// Request types
+
 message AllOfRequest {
     // If this is omitted, we ask for the entire contents of the model
     string typeName = 1;
@@ -96,13 +100,31 @@ message GetElementByIDRequest {
 
 message Empty {}
 
+message CreateInstanceRequest {
+    string typeName = 1;
+}
+
+message OpenSessionRequest {
+    string description = 1;
+}
+
+// Main service
+
 service ModelService {
     // gRPC lazily connects: we can use this as a "ping" to see if the server is available
     rpc ping(Empty) returns (Empty);
 
+    // read API
     rpc allOf(AllOfRequest) returns (ModelElementCollection);
     rpc getElementByID(GetElementByIDRequest) returns (ModelElement);
     rpc getEnumerationValue(GetEnumerationValueRequest) returns (GetEnumerationValueResponse);
     rpc getFeatureValue(GetFeatureValueRequest) returns (Value);
     rpc getType(GetTypeRequest) returns (ModelElementType);
+
+    // write API
+    rpc openSession(OpenSessionRequest) returns (Empty);
+    rpc closeSession(Empty) returns (Empty);
+    rpc cancelSession(Empty) returns (Empty);
+
+    rpc createInstance(CreateInstanceRequest) returns (ModelElement);
 }

@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.epsilon.emc.magicdraw.mdplugin.remote;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -19,6 +20,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -35,6 +38,7 @@ import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.BooleanCollection;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.CreateInstanceRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.DoubleCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Empty;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetElementByIDRequest;
@@ -47,32 +51,40 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementType;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementTypeReference;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceConstants;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceGrpc;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.OpenSessionRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.StringCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.rpc.ErrorInfo;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.foundation.MDObject;
+import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.magicdraw.uml.Finder;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.impl.ElementsFactory;
 
+import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
+import io.grpc.protobuf.ProtoUtils;
 import io.grpc.stub.StreamObserver;
 
 public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ModelAccessService.class);
-	
+	private static final String GRPC_DOMAIN = ModelAccessService.class.getPackage().getName();
+
 	@Override
 	public void allOf(AllOfRequest request, StreamObserver<ModelElementCollection> responseObserver) {
 		Project project = Application.getInstance().getProject();
 		if (project == null) {
-			responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.FAILED_PRECONDITION)));
-			LOGGER.warn("Project is not open yet");
+			replyProjectNotOpen(responseObserver);
 			return;
 		}
 
@@ -113,7 +125,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	private void checkForAmbiguousType(String type, StreamObserver<?> responseObserver, Collection<? extends EClassifier> options) {
 		if (options.size() == 0) {
 			LOGGER.warn(String.format("Cannot find type '%s'", type));
-			responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
+			replyTypeNotFound(responseObserver, type);
 		} else if (options.size() > 1) {
 			List<String> nsURIs = options.stream().map(e -> getFullyQualifiedName(e) + " from " + e.getEPackage()).collect(Collectors.toList());
 			LOGGER.warn(String.format("Type '%s' is ambiguous (options: %s)", type, nsURIs));
@@ -236,8 +248,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	public void getFeatureValue(GetFeatureValueRequest request, StreamObserver<Value> responseObserver) {
 		Project project = Application.getInstance().getProject();
 		if (project == null) {
-			responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.FAILED_PRECONDITION)));
-			LOGGER.warn("Project is not open yet");
+			replyProjectNotOpen(responseObserver);
 			return;
 		}
 
@@ -330,13 +341,12 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		}
 	}
 
-	
-
 	@Override
 	public void getType(GetTypeRequest request, StreamObserver<ModelElementType> responseObserver) {
 		Collection<EClassifier> options = findEClassifier(request.getTypeName());
 		checkForAmbiguousType(request.getTypeName(), responseObserver, options);
 		if (options.isEmpty()) return;
+		
 		final EClassifier eClassifier = options.iterator().next();
 
 		final ModelElementType.Builder builder = ModelElementType.newBuilder()
@@ -348,11 +358,10 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 			for (EClass supertype : ((EClass) eClassifier).getEAllSuperTypes()) {
 				builder.addAllSupertypes(ModelElementTypeReference.newBuilder()
 					.setMetamodelUri(supertype.getEPackage().getNsURI())
-					.setTypeName(getFullyQualifiedName(supertype))
-					.build());
+					.setTypeName(getFullyQualifiedName(supertype)).build());
 			}
 		}
-		
+
 		responseObserver.onNext(builder.build());
 		responseObserver.onCompleted();
 	}
@@ -402,8 +411,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	public void getElementByID(GetElementByIDRequest request, StreamObserver<ModelElement> responseObserver) {
 		Project project = Application.getInstance().getProject();
 		if (project == null) {
-			responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.FAILED_PRECONDITION)));
-			LOGGER.warn("Project is not open yet");
+			replyProjectNotOpen(responseObserver);
 			return;
 		}
 
@@ -428,5 +436,146 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		responseObserver.onNext(Empty.newBuilder().build());
 		responseObserver.onCompleted();
 	}
+
+	@Override
+	public void createInstance(CreateInstanceRequest request, StreamObserver<ModelElement> responseObserver) {
+		Project project = Application.getInstance().getProject();
+		if (project == null) {
+			replyProjectNotOpen(responseObserver);
+			return;
+		}
+
+		final SessionManager sessionManager = SessionManager.getInstance();
+		boolean inSession = sessionManager.isSessionCreated(project);
+		if (!inSession) {
+			replyNotInSession(responseObserver);
+			return;
+		}
+
+		final String typeName = request.getTypeName();
+		Collection<EClassifier> options = findEClassifier(typeName);
+		checkForAmbiguousType(typeName, responseObserver, options);
+		if (options.isEmpty()) return;
+
+		EClassifier eClassifier = options.iterator().next();
+		if (!(eClassifier instanceof EClass)) {
+			replyTypeNotInstantiable(responseObserver, String.format("%s is not an EClassifier", getFullyQualifiedName(eClassifier)));
+			return;
+		}
+
+		EClass eClass = (EClass) eClassifier;
+		if (eClass.isAbstract()) {
+			replyTypeNotInstantiable(responseObserver, String.format("%s is abstract", getFullyQualifiedName(eClass)));
+		} else {
+			final String methodName = "create" + eClass.getName() + "Instance";
+			ElementsFactory factory = project.getElementsFactory();
+			try {
+				Method mCreateInstance = factory.getClass().getMethod(methodName);
+				MDObject mdObject = (MDObject) mCreateInstance.invoke(factory);
+				if (mdObject instanceof Element) {
+					((Element) mdObject).setOwner(project.getPrimaryModel());
+				}
+				responseObserver.onNext(encodeModelElement(mdObject));
+				responseObserver.onCompleted();
+			} catch (NoSuchMethodException e) {
+				LOGGER.error(e.getMessage(), e);
+				replyTypeNotInstantiable(responseObserver, String.format("Cannot find method %s in the ElementsFactory", methodName));
+			} catch (Exception e) {
+				LOGGER.error(e.getMessage(), e);
+				replyTypeNotInstantiable(responseObserver, String.format("Invocation of method %s in the ElementsFactory failed", methodName));
+			}
+		}
+	}
+
+	/**
+	 * @param responseObserver
+	 */
+	private <T> void replyNotInSession(StreamObserver<T> responseObserver) {
+		responseObserver.onError(Status.fromCode(Code.FAILED_PRECONDITION)
+			.withDescription("A session is not open yet")
+			.asRuntimeException());
+	}
+
+	@Override
+	public void openSession(OpenSessionRequest request, StreamObserver<Empty> responseObserver) {
+		final Project project = Application.getInstance().getProject();
+		if (project == null) {
+			replyProjectNotOpen(responseObserver);
+			return;
+		}
+
+		final SessionManager sessionManager = SessionManager.getInstance();
+		boolean inSession = sessionManager.isSessionCreated(project);
+		if (inSession) {
+			responseObserver.onError(Status.fromCode(Code.FAILED_PRECONDITION)
+				.withDescription("A session is already open")
+				.asRuntimeException());
+		}
+
+		sessionManager.createSession(project, request.getDescription());
+		responseObserver.onNext(Empty.newBuilder().build());
+		responseObserver.onCompleted();
+	}
+
+	@Override
+	public void closeSession(Empty request, StreamObserver<Empty> responseObserver) {
+		interactWithOpenSession(responseObserver, (project) -> (sm) -> sm.closeSession(project));
+	}
+
+	@Override
+	public void cancelSession(Empty request, StreamObserver<Empty> responseObserver) {
+		interactWithOpenSession(responseObserver, (project) -> (sm) -> sm.cancelSession(project));
+	}
+
+	private void interactWithOpenSession(StreamObserver<Empty> responseObserver, Function<Project, Consumer<SessionManager>> call) {
+		final Project project = Application.getInstance().getProject();
+		if (project == null) {
+			replyProjectNotOpen(responseObserver);
+			return;
+		}
+
+		final SessionManager sessionManager = SessionManager.getInstance();
+		boolean inSession = sessionManager.isSessionCreated(project);
+		if (!inSession) {
+			replyNotInSession(responseObserver);
+		}
+
+		call.apply(project).accept(sessionManager);
+		responseObserver.onNext(Empty.newBuilder().build());
+		responseObserver.onCompleted();
+	}
 	
+	private <T> void replyTypeNotInstantiable(StreamObserver<T> responseObserver, final String description) {
+		Metadata metadata = new Metadata();
+		Metadata.Key<ErrorInfo> errorKey = ProtoUtils.keyForProto(ErrorInfo.getDefaultInstance());
+		metadata.put(errorKey, ErrorInfo.newBuilder()
+			.setReason(ModelServiceConstants.REASON_CANNOT_INSTANTIATE_TYPE)
+			.setDomain(GRPC_DOMAIN)
+			.build());
+
+		responseObserver.onError(Status.fromCode(Code.INVALID_ARGUMENT)
+			.withDescription(description).asRuntimeException(metadata));
+	}
+
+	private <T> void replyProjectNotOpen(StreamObserver<T> responseObserver) {
+		responseObserver.onError(Status.fromCode(Code.FAILED_PRECONDITION)
+			.withDescription("Project is not open yet")
+			.asRuntimeException());
+	}
+
+	private <T> void replyTypeNotFound(StreamObserver<T> responseObserver, final String typeName) {
+		Metadata metadata = new Metadata();
+		Metadata.Key<ErrorInfo> errorKey = ProtoUtils.keyForProto(ErrorInfo.getDefaultInstance());
+		metadata.put(errorKey, ErrorInfo.newBuilder()
+			.setReason(ModelServiceConstants.REASON_CANNOT_FIND_TYPE)
+			.setDomain(GRPC_DOMAIN)
+			.build());
+
+		final StatusRuntimeException error = Status.INVALID_ARGUMENT
+			.withDescription(String.format("Cannot find type %s", typeName))
+			.asRuntimeException(metadata);
+
+		responseObserver.onError(error);
+	}
+
 }

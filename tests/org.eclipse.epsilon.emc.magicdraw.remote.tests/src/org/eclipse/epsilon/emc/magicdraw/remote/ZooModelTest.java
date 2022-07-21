@@ -19,7 +19,9 @@ import java.util.Collection;
 
 import org.eclipse.epsilon.eol.EolModule;
 import org.eclipse.epsilon.eol.exceptions.models.EolEnumerationValueNotFoundException;
+import org.eclipse.epsilon.eol.exceptions.models.EolModelElementTypeNotFoundException;
 import org.eclipse.epsilon.eol.exceptions.models.EolModelLoadingException;
+import org.eclipse.epsilon.eol.exceptions.models.EolNotInstantiableModelElementTypeException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -120,6 +122,24 @@ public class ZooModelTest {
 	public void allTypeNamesOf() throws Exception {
 		final Collection<String> allTypeNamesOf = m.getAllTypeNamesOf(m.getElementById(CLASS_OBJECT_ID));
 		assertTrue(allTypeNamesOf.contains("foundation::MDObject"));
+	}
+
+	@Test
+	public void createClass() throws Exception {
+		final int originalClassCount = m.getAllOfKind("Class").size();
+		m.createInstance("Class");
+		assertEquals("The number of classes should have increased by 1 after a createInstance call",
+			originalClassCount + 1, m.getAllOfKind("Class").size());
+	}
+
+	@Test(expected=EolModelElementTypeNotFoundException.class)
+	public void createMissingType() throws Exception {
+		m.createInstance("IDoNotExist");
+	}
+
+	@Test(expected=EolNotInstantiableModelElementTypeException.class)
+	public void createAbstractType() throws Exception {
+		m.createInstance("ActivityNode");
 	}
 
 	@Before
