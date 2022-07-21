@@ -63,6 +63,7 @@ import com.google.rpc.ErrorInfo;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.foundation.MDObject;
+import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.magicdraw.uml.Finder;
@@ -473,7 +474,8 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 				Method mCreateInstance = factory.getClass().getMethod(methodName);
 				MDObject mdObject = (MDObject) mCreateInstance.invoke(factory);
 				if (mdObject instanceof Element) {
-					((Element) mdObject).setOwner(project.getPrimaryModel());
+					// TODO support a rootElementHyperlink option for indicating where model elements should be created
+					ModelElementsManager.getInstance().addElement((Element) mdObject, project.getPrimaryModel());
 				}
 				responseObserver.onNext(encodeModelElement(mdObject));
 				responseObserver.onCompleted();
