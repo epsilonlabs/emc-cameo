@@ -106,12 +106,14 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		} else {
 			BaseElement element = Finder.byHyperlink().find(project, rootElementHyperlink);
 			if (element == null) {
-				LOGGER.warn(String.format("Could not find element with URI %s", rootElementHyperlink));
-				responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
+				responseObserver.onError(Status.INVALID_ARGUMENT
+					.withDescription(String.format("Could not find element with URI %s", rootElementHyperlink))
+					.asRuntimeException());
 				return;
 			} else if (!(element instanceof EObject)) {
-				LOGGER.warn(String.format("Element with URI %s is not an EObject", rootElementHyperlink));
-				responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
+				responseObserver.onError(Status.INVALID_ARGUMENT
+					.withDescription(String.format("Element with URI %s is not an EObject", rootElementHyperlink))
+					.asRuntimeException());
 				return;
 			} else {
 				root = (EObject) element;
@@ -125,7 +127,6 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 
 	private void checkForAmbiguousType(String type, StreamObserver<?> responseObserver, Collection<? extends EClassifier> options) {
 		if (options.size() == 0) {
-			LOGGER.warn(String.format("Cannot find type '%s'", type));
 			replyTypeNotFound(responseObserver, type);
 		} else if (options.size() > 1) {
 			List<String> nsURIs = options.stream().map(e -> getFullyQualifiedName(e) + " from " + e.getEPackage()).collect(Collectors.toList());
@@ -193,6 +194,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 			final EClassifier eClassifier = findEClassifierAbsolute(parts, getRootEPackages());
 			if (eClassifier == null) {
 				LOGGER.warn(String.format("Cannot find type '%s'", typeName));
+				return Collections.emptySet();
 			}
 			return Collections.singleton(eClassifier);
 		} else {
@@ -255,8 +257,9 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 
 		final MDObject mdObject = (MDObject) project.getElementByID(request.getElementID());
 		if (mdObject == null) {
-			responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
-			LOGGER.warn(String.format("No object exists with ID '%s'", request.getElementID()));
+			responseObserver.onError(Status.INVALID_ARGUMENT
+				.withDescription(String.format("No object exists with ID '%s'", request.getElementID()))
+				.asRuntimeException());
 			return;
 		}
 
@@ -273,8 +276,9 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 				} else if (eFeature instanceof EAttribute) {
 					encodeAttribute(eFeature, vBuilder, rawValue);
 				} else {
-					LOGGER.warn(String.format("Unknown feature type '%s'", eFeature.eClass().getName()));
-					responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
+					responseObserver.onError(Status.INVALID_ARGUMENT
+						.withDescription(String.format("Unknown feature type '%s'", eFeature.eClass().getName()))
+						.asRuntimeException());
 				}
 			}
 		}
@@ -394,8 +398,9 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 
 		// Report result
 		if (literal == null) {
-			LOGGER.warn(String.format("Could not find enumeration value '%s' in '%s'", request.getLabel(), request.getEnumeration()));
-			responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
+			responseObserver.onError(Status.INVALID_ARGUMENT
+				.withDescription(String.format("Could not find enumeration value '%s' in '%s'", request.getLabel(), request.getEnumeration()))
+				.asRuntimeException());
 		} else {
 			final GetEnumerationValueResponse response = GetEnumerationValueResponse.newBuilder()
 				.setValue(literal.getValue())
@@ -419,12 +424,14 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		final String id = request.getElementID();
 		final BaseElement element = project.getElementByID(id);
 		if (element == null) {
-			LOGGER.warn(String.format("Could not find element with ID %s", id));
-			responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
+			responseObserver.onError(Status.INVALID_ARGUMENT
+				.withDescription(String.format("Could not find element with ID %s", id))
+				.asRuntimeException());
 			return;
 		} else if (!(element instanceof MDObject)) {
-			LOGGER.warn(String.format("Element with ID %s is not an MDObject", id));
-			responseObserver.onError(new StatusRuntimeException(Status.fromCode(Code.INVALID_ARGUMENT)));
+			responseObserver.onError(Status.INVALID_ARGUMENT
+					.withDescription(String.format("Element with ID %s is not an MDObject", id))
+					.asRuntimeException());
 			return;
 		} else {
 			responseObserver.onNext(encodeModelElement((MDObject) element));
