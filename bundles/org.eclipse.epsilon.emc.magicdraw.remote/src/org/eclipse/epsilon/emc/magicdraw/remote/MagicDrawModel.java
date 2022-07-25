@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import org.eclipse.epsilon.common.util.StringProperties;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.CreateInstanceRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.DeleteInstanceRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Empty;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetElementByIDRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueRequest;
@@ -300,8 +301,21 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 
 	@Override
 	protected boolean deleteElementInModel(Object instance) throws EolRuntimeException {
-		// TODO Auto-generated method stub
-		return false;
+		if (!(instance instanceof MDModelElement)) {
+			return false;
+		}
+		MDModelElement mdElem = (MDModelElement) instance;
+
+		sessionState.ensureOpened();
+		try {
+			client.deleteInstance(DeleteInstanceRequest.newBuilder()
+				.setElementID(mdElem.getElementID())
+				.build());
+			return true;
+		} catch (Exception ex) {
+			LOGGER.error(ex.getMessage(), ex);
+			return false;
+		}
 	}
 
 	@Override

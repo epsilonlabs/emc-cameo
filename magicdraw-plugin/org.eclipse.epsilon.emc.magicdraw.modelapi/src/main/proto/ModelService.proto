@@ -104,6 +104,10 @@ message CreateInstanceRequest {
     string typeName = 1;
 }
 
+message DeleteInstanceRequest {
+    string elementID = 1;
+}
+
 message OpenSessionRequest {
     string description = 1;
 }
@@ -127,4 +131,5 @@ service ModelService {
     rpc cancelSession(Empty) returns (Empty);
 
     rpc createInstance(CreateInstanceRequest) returns (ModelElement);
+    rpc deleteInstance(DeleteInstanceRequest) returns (Empty);
 }

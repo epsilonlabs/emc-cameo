@@ -29,6 +29,7 @@ import org.eclipse.epsilon.emc.magicdraw.mdplugin.remote.emf.ModelUtils;
 import org.eclipse.epsilon.emc.magicdraw.mdplugin.remote.emf.ObjectEncoder;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.CreateInstanceRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.DeleteInstanceRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Empty;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetElementByIDRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueRequest;
@@ -51,6 +52,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.foundation.MDObject;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
+import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.magicdraw.uml.Finder;
@@ -213,21 +215,24 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	@Override
 	public void getElementByID(GetElementByIDRequest request, StreamObserver<ModelElement> responseObserver) {
 		sendResponse(responseObserver, inProject()
-			.flatMapRight((project) -> {
-				final String id = request.getElementID();
-				final BaseElement element = project.getElementByID(id);
-				if (element == null) {
-					return Either.left(Status.INVALID_ARGUMENT
-						.withDescription(String.format("Could not find element with ID %s", id))
-						.asRuntimeException());
-				} else if (!(element instanceof MDObject)) {
-					return Either.left(Status.INVALID_ARGUMENT
-						.withDescription(String.format("Element with ID %s is not an MDObject", id))
-						.asRuntimeException());
-				} else {
-					return Either.right(encoder.encode((MDObject) element));
-				}
-			}));
+			.flatMapRight((project) -> getElementByID(project, request.getElementID())
+			.flatMapRight((mdObject) -> Either.right(encoder.encode(mdObject)))
+		));
+	}
+
+	private Either<StatusRuntimeException, MDObject> getElementByID(Project project, final String id) {
+		final BaseElement element = project.getElementByID(id);
+		if (element == null) {
+			return Either.left(Status.INVALID_ARGUMENT
+				.withDescription(String.format("Could not find element with ID %s", id))
+				.asRuntimeException());
+		} else if (!(element instanceof MDObject)) {
+			return Either.left(Status.INVALID_ARGUMENT
+				.withDescription(String.format("Element with ID %s is not an MDObject", id))
+				.asRuntimeException());
+		} else {
+			return Either.right((MDObject) element);
+		}
 	}
 
 	@Override
@@ -289,6 +294,29 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	@Override
 	public void cancelSession(Empty request, StreamObserver<Empty> responseObserver) {
 		interactWithOpenSession(responseObserver, (project) -> (sm) -> sm.cancelSession(project));
+	}
+
+	@Override
+	public void deleteInstance(DeleteInstanceRequest request, StreamObserver<Empty> responseObserver) {
+		sendResponse(responseObserver, inProject().flatMapRight(
+			(project) -> inSession(project).flatMapRight((sessionManager) -> {
+				return getElementByID(project, request.getElementID()).flatMapRight((mdObject) -> {
+					if (mdObject instanceof Element) {
+						try {
+							ModelElementsManager.getInstance().removeElement((Element) mdObject);
+							return Either.right(Empty.newBuilder().build());
+						} catch (ReadOnlyElementException e) {
+							return Either.left(Status.INVALID_ARGUMENT
+								.withDescription(String.format("Object with ID %s is read only", request.getElementID()))
+								.asRuntimeException());
+						}
+					} else {
+						return Either.left(Status.INVALID_ARGUMENT
+							.withDescription(String.format("Object with ID %s is not an Element", request.getElementID()))
+							.asRuntimeException());
+					}
+				});
+		})));
 	}
 
 	private Either<StatusRuntimeException, EClassifier> findEClassifier(String typeName) {

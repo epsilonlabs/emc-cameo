@@ -17,6 +17,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
 
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.eol.EolModule;
 import org.eclipse.epsilon.eol.exceptions.models.EolEnumerationValueNotFoundException;
 import org.eclipse.epsilon.eol.exceptions.models.EolModelElementTypeNotFoundException;
@@ -38,12 +39,12 @@ public class ZooModelTest {
 
 	@Test
 	public void allOf() throws Exception {
-		assertEquals("5 Class objects (including subtypes) should be visible from the sample Zoo model", 5, m.getAllOfKind("Class").size());
+		assertEquals("5 Class objects (including subtypes) should be visible from the sample Zoo model", 5, classCount());
 		assertEquals("4 Class objects (exact type) should be visible from the sample Zoo model", EXPECTED_CLASSES, m.getAllOfType("Class").size());
 
 		// We can omit the root element hyperlink (it'll be the primary model in that case)
 		m.setRootElementHyperlink(null);
-		assertEquals("1 ProtocolStateMachine object (including subtypes) should be visible from the sample Zoo model", 1, m.getAllOfKind("ProtocolStateMachine").size());
+		assertEquals("1 ProtocolStateMachine object (including subtypes) should be visible from the sample Zoo model", 1, count("ProtocolStateMachine"));
 		assertEquals("1 ProtocolStateMachine object (exact type) should be visible from the sample Zoo model", 1, m.getAllOfType("ProtocolStateMachine").size());
 	}
 
@@ -126,10 +127,10 @@ public class ZooModelTest {
 
 	@Test
 	public void createClass() throws Exception {
-		final int originalClassCount = m.getAllOfKind("Class").size();
-		m.createInstance("Class");
+		final int originalClassCount = classCount();
+		assertNotNull("Creating an instance in the model should return a proxy object", m.createInstance("Class"));
 		assertEquals("The number of classes should have increased by 1 after a createInstance call",
-			originalClassCount + 1, m.getAllOfKind("Class").size());
+			originalClassCount + 1, classCount());
 	}
 
 	@Test(expected=EolModelElementTypeNotFoundException.class)
@@ -141,7 +142,44 @@ public class ZooModelTest {
 	public void createAbstractType() throws Exception {
 		m.createInstance("ActivityNode");
 	}
+	
+	@Test
+	public void deleteInstance() throws Exception {
+		final int originalClassCount = classCount();
+		Object element = m.getElementById(CLASS_OBJECT_ID);
+		assertTrue("Deleting an existing object from the model should succeed", m.deleteElementInModel(element));
+		assertEquals("Deleting an existing class from the model should reduce the total number of classes",
+			originalClassCount - 1, classCount());
+	}
 
+	@Test
+	public void deleteNonExistingInstance() throws Exception {
+		final int originalClassCount = classCount();
+		MDModelElement bogusElement = new MDModelElement(m, ModelElement.newBuilder()
+			.setElementID("bogus")
+			.build());
+
+		assertFalse("Deleting a non-existing class from the model should fail", m.deleteElementInModel(bogusElement));
+		assertEquals("Deleting a non-existing class from the model should not change the number of classes",
+			originalClassCount, classCount());
+	}
+
+	@Test
+	public void deleteNonElement() throws Exception {
+		final int originalClassCount = classCount();
+		assertFalse("Deleting a non-element from the model should fail", m.deleteElementInModel(1));
+		assertEquals("Deleting a non-element from the model should not change the number of classes",
+				originalClassCount, classCount());
+	}
+
+	private int classCount() throws EolModelElementTypeNotFoundException {
+		return count("uml::Class");
+	}
+
+	private int count(String klass) throws EolModelElementTypeNotFoundException {
+		return m.getAllOfKind(klass).size();
+	}
+	
 	@Before
 	public void createZooModel() throws EolModelLoadingException {
 		m = new MagicDrawModel();
