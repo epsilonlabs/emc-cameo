@@ -59,7 +59,6 @@ import com.nomagic.uml2.impl.ElementsFactory;
 
 import io.grpc.Metadata;
 import io.grpc.Status;
-import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import io.grpc.protobuf.ProtoUtils;
 import io.grpc.stub.StreamObserver;
@@ -69,8 +68,8 @@ import io.grpc.stub.StreamObserver;
  */
 public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	/*
-	 * This class makes heavy use of an Either type (inspired in Scala) which
-	 * represents a value of one of two types (our version allows for null values).
+	 * This class makes heavy use of an Either type (inspired by Scala's Either type)
+	 * which represents a value of one of two types (our version allows for null values).
 	 *
 	 * We use it to DRY the code involved in error reporting: in gRPC, rather than
 	 * using exceptions, we have to create StatusRuntimException objects an send
@@ -333,7 +332,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	private <T> Either<StatusRuntimeException, Project> inProject() {
 		Project project = Application.getInstance().getProject();
 		if (project == null) {
-			return Either.left(Status.fromCode(Code.FAILED_PRECONDITION)
+			return Either.left(Status.FAILED_PRECONDITION
 				.withDescription("Project is not open yet")
 				.asRuntimeException());
 		} else {
@@ -353,7 +352,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		final SessionManager sessionManager = SessionManager.getInstance();
 		boolean inSession = sessionManager.isSessionCreated(project);
 		if (inSession != expected) {
-			return Either.left(Status.fromCode(Code.FAILED_PRECONDITION)
+			return Either.left(Status.FAILED_PRECONDITION
 				.withDescription(String.format("A session is %s", expected ? "not open yet" : "still open"))
 				.asRuntimeException());
 		} else {
