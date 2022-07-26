@@ -27,11 +27,19 @@ message StringCollection {
     repeated string values = 1;
 }
 
+message FloatCollection {
+    repeated float values = 1;
+}
+
 message DoubleCollection {
     repeated double values = 1;
 }
 
 message IntegerCollection {
+    repeated sint32 values = 1;
+}
+
+message LongCollection {
     repeated sint64 values = 1;
 }
 
@@ -56,20 +64,28 @@ message EnumerationValueCollection {
 message Value {
     oneof value {
         string stringValue = 1;
-        double doubleValue = 2;
-        sint64 longValue = 3;
-        bool booleanValue = 4;
-        ModelElement referenceValue = 5;
-        EnumerationValue enumerationValue = 13;
+        float floatValue = 2;
+        double doubleValue = 3;
+        sint32 byteValue = 4;
+        sint32 shortValue = 5;
+        sint32 integerValue = 6;
+        sint64 longValue = 7;
+        bool booleanValue = 8;
+        ModelElement referenceValue = 9;
+        EnumerationValue enumerationValue = 10;
 
-        StringCollection stringValues = 7;
-        DoubleCollection doubleValues = 8;
-        IntegerCollection longValues = 9;
-        BooleanCollection booleanValues = 10;
-        ModelElementCollection referenceValues = 11;
-        EnumerationValueCollection enumerationValues = 14;
+        StringCollection stringValues = 11;
+        FloatCollection floatValues = 12;
+        DoubleCollection doubleValues = 13;
+        IntegerCollection byteValues = 14;
+        IntegerCollection shortValues = 15;
+        IntegerCollection integerValues = 16;
+        LongCollection longValues = 17;
+        BooleanCollection booleanValues = 18;
+        ModelElementCollection referenceValues = 19;
+        EnumerationValueCollection enumerationValues = 20;
 
-        bool notDefined = 12;
+        bool notDefined = 21;
     }
 }
 

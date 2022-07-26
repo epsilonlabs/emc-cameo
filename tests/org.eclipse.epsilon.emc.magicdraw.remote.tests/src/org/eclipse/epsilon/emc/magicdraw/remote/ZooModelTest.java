@@ -257,6 +257,39 @@ public class ZooModelTest {
 		assertEquals("After the assignment, the name of the owning package for Lion should be NewPackage", "NewPackage", module.execute());
 	}
 
+	@Test
+	public void setSingleInteger() throws Exception {
+		EolModule module = new EolModule();
+		module.getContext().getModelRepository().addModel(m);
+
+		module.parse("return LiteralInteger.all.first.value;");
+		assertEquals("At first, the default value of Animal::age should be 0", 0, module.execute());
+
+		final int newValue = 23;
+		module.parse(String.format("LiteralInteger.all.first.value = %d;", newValue));
+		module.execute();
+
+		module.parse("return LiteralInteger.all.first.value;");
+		assertEquals("After the assignment, the default value of Animal::age should be " + newValue, newValue, module.execute());
+	}
+
+	@Test
+	public void setSingleDouble() throws Exception {
+		EolModule module = new EolModule();
+		module.getContext().getModelRepository().addModel(m);
+
+		// Given the original owning package of Lion was the main Model one
+		module.parse("return LiteralReal.all.first.value;");
+		assertEquals("At first, the default value of Animal::weight should be 0", 0.0d, module.execute());
+
+		final double newValue = 47;
+		module.parse(String.format("LiteralReal.all.first.value = %.1fd;", newValue));
+		module.execute();
+
+		module.parse("return LiteralReal.all.first.value;");
+		assertEquals("After the assignment, the default value of Animal::weight should be " + newValue, newValue, module.execute());
+	}
+
 	@Test(expected=EolRuntimeException.class)
 	public void setMissingFields() throws Exception {
 		EolModule module = new EolModule();

@@ -44,10 +44,30 @@ public class MagicDrawPropertyGetter extends JavaPropertyGetter {
 			switch (response.getValueCase()) {
 			case BOOLEANVALUE: return response.getBooleanValue();
 			case BOOLEANVALUES: return response.getBooleanValues().getValuesList();
+			case FLOATVALUE: return response.getFloatValue();
+			case FLOATVALUES: return response.getFloatValues().getValuesList();
 			case DOUBLEVALUE: return response.getDoubleValue();
 			case DOUBLEVALUES: return response.getDoubleValues().getValuesList();
 			case LONGVALUE: return response.getLongValue();
 			case LONGVALUES: return response.getLongValues();
+			case INTEGERVALUE: return response.getIntegerValue();
+			case INTEGERVALUES: return response.getIntegerValues().getValuesList();
+			case SHORTVALUE: return (short) response.getShortValue();
+			case SHORTVALUES: {
+				List<Short> elems = new ArrayList<>(response.getShortValues().getValuesCount());
+				for (Integer e : response.getShortValues().getValuesList()) {
+					elems.add(e.shortValue());
+				}
+				return elems;
+			}
+			case BYTEVALUE: return (byte) response.getByteValue();
+			case BYTEVALUES: {
+				List<Byte> elems = new ArrayList<>(response.getShortValues().getValuesCount());
+				for (Integer e : response.getShortValues().getValuesList()) {
+					elems.add(e.byteValue());
+				}
+				return elems;
+			}
 			case STRINGVALUE: return response.getStringValue();
 			case STRINGVALUES: return response.getStringValues();
 			case REFERENCEVALUE: return new MDModelElement(model, response.getReferenceValue());

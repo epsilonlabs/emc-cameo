@@ -20,7 +20,7 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
 import com.nomagic.magicdraw.core.Project;
 
 /**
- *  Decodes {@link Value} objects into raw values that can be used
+ *  Decodes {@link Value} objects coming from the API into raw values that can be used
  *  for an {@link EObject#eSet(org.eclipse.emf.ecore.EStructuralFeature, Object)}
  *  call.
  */
@@ -32,6 +32,8 @@ public class ValueDecoder {
 		switch (value.getValueCase()) {
 		case STRINGVALUE: return value.getStringValue();
 		case BOOLEANVALUE: return value.getBooleanValue();
+		case FLOATVALUE: return value.getFloatValue();
+		case DOUBLEVALUE: return value.getDoubleValue();
 		case ENUMERATIONVALUE: {
 			final EDataType eDataType = (EDataType) targetFeature.getEType();
 			final String literal = value.getEnumerationValue().getLiteral();
@@ -41,6 +43,14 @@ public class ValueDecoder {
 			final ModelElement elem = value.getReferenceValue();
 			return project.getElementByID(elem.getElementID());
 		}
+		case LONGVALUE: return value.getLongValue();
+		case INTEGERVALUE: return value.getIntegerValue();
+		case SHORTVALUE: return (short) value.getShortValue();
+		case BYTEVALUE: return (byte) value.getByteValue();
+
+		// TODO lists (both literal and proxies)
+
+		case VALUE_NOT_SET:
 		case NOTDEFINED: return null;
 		}
 

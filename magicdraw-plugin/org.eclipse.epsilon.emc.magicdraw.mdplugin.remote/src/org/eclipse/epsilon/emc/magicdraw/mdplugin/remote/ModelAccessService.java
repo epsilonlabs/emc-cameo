@@ -59,6 +59,7 @@ import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.magicdraw.uml.Finder;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.VisibilityKind;
 import com.nomagic.uml2.impl.ElementsFactory;
 
 import io.grpc.Metadata;
@@ -153,11 +154,12 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 						 * MagicDraw does not use default values consistently in their feature
 						 * declarations: for instance, a class with a public visibility will have
 						 * eGet(eFeature) return null, but getVisibility() will return the public
-						 * enumerator value. We use reflection in this case as a fallback.
+						 * enumerator value. Calling the get*() method directly via reflection
+						 * always works, though, but it is much slower.
 						 *
 						 * Normally we would check if the eType of the feature is an EEnum and
 						 * use the first literal as the default value [1], but it appears that the
-						 * visibility is a custom EDataTypeImpl class.
+						 * visibility is a custom EDataTypeImpl class with no clear link to an EEnum.
 						 *
 						 * [1]: https://www.eclipse.org/forums/index.php?t=msg&th=168434/
 						 */

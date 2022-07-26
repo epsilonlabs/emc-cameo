@@ -28,7 +28,9 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.BooleanCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.DoubleCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.EnumerationValue;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.EnumerationValueCollection;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.FloatCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.IntegerCollection;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.LongCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.StringCollection;
@@ -37,7 +39,7 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
 import com.nomagic.magicdraw.foundation.MDObject;
 
 /**
- * Encodes objects and values into the API types.
+ * Encodes objects and values from MagicDraw into the API types.
  */
 public class ValueEncoder {
 
@@ -66,10 +68,20 @@ public class ValueEncoder {
 	}
 
 	private void encodeScalarAttribute(Value.Builder vBuilder, final Object rawValue) {
-		if (rawValue instanceof Byte || rawValue instanceof Short || rawValue instanceof Integer || rawValue instanceof Long) {
-			vBuilder.setLongValue((byte) rawValue);
-		} else if (rawValue instanceof Float || rawValue instanceof Double) {
-			vBuilder.setDoubleValue((float) rawValue);
+		if (rawValue instanceof Number) {
+			if (rawValue instanceof Float) {
+				vBuilder.setFloatValue(((Number) rawValue).floatValue());
+			} else if (rawValue instanceof Double) {
+				vBuilder.setDoubleValue(((Number) rawValue).doubleValue());
+			} else if (rawValue instanceof Long) {
+				vBuilder.setLongValue(((Number) rawValue).longValue());
+			} else if (rawValue instanceof Integer) {
+				vBuilder.setIntegerValue(((Number) rawValue).intValue());
+			} else if (rawValue instanceof Short) {
+				vBuilder.setShortValue(((Number) rawValue).shortValue());
+			} else {
+				vBuilder.setByteValue(((Number) rawValue).byteValue());
+			}
 		} else if (rawValue instanceof String) {
 			vBuilder.setStringValue((String) rawValue);
 		} else if (rawValue instanceof Boolean) {
@@ -82,32 +94,51 @@ public class ValueEncoder {
 	private void encodeManyScalarsAttribute(Value.Builder vBuilder, final Object rawValue) {
 		final Iterator<?> it = ((Collection<?>) rawValue).iterator();
 		final Object firstValue = it.next();
-		if (rawValue instanceof Byte || rawValue instanceof Short || rawValue instanceof Integer
-				|| rawValue instanceof Long) {
-			IntegerCollection.Builder iBuilder = IntegerCollection.newBuilder();
-			iBuilder.addValues((long) firstValue);
-			while (it.hasNext())
-				iBuilder.addValues((long) it.next());
-			vBuilder.setLongValues(iBuilder.build());
-		} else if (rawValue instanceof Float || rawValue instanceof Double) {
-			DoubleCollection.Builder iBuilder = DoubleCollection.newBuilder();
-			iBuilder.addValues((double) firstValue);
-			while (it.hasNext())
-				iBuilder.addValues((double) it.next());
-			vBuilder.setDoubleValues(iBuilder.build());
-		} else if (rawValue instanceof String) {
+		if (firstValue instanceof Number) {
+			if (firstValue instanceof Float) {
+				FloatCollection.Builder builder = FloatCollection.newBuilder();
+				builder.addValues((float) firstValue);
+				while (it.hasNext())
+					builder.addValues((float) it.next());
+				vBuilder.setFloatValues(builder);
+			} else if (firstValue instanceof Double) {
+				DoubleCollection.Builder builder = DoubleCollection.newBuilder();
+				builder.addValues((double) firstValue);
+				while (it.hasNext())
+					builder.addValues((double) it.next());
+				vBuilder.setDoubleValues(builder);
+			} else if (firstValue instanceof Long) {
+				LongCollection.Builder builder = LongCollection.newBuilder();
+				builder.addValues((long) firstValue);
+				while (it.hasNext())
+					builder.addValues((long) it.next());
+				vBuilder.setLongValues(builder);
+			} else {
+				IntegerCollection.Builder builder = IntegerCollection.newBuilder();
+				builder.addValues((int) firstValue);
+				while (it.hasNext())
+					builder.addValues((int) it.next());
+				if (firstValue instanceof Integer) {
+					vBuilder.setIntegerValues(builder);
+				} else if (firstValue instanceof Short) {
+					vBuilder.setShortValues(builder);
+				} else {
+					vBuilder.setByteValues(builder);
+				}
+			}
+		} else if (firstValue instanceof String) {
 			StringCollection.Builder iBuilder = StringCollection.newBuilder();
 			iBuilder.addValues((String) firstValue);
 			while (it.hasNext())
 				iBuilder.addValues((String) it.next());
 			vBuilder.setStringValues(iBuilder.build());
-		} else if (rawValue instanceof Boolean) {
+		} else if (firstValue instanceof Boolean) {
 			BooleanCollection.Builder iBuilder = BooleanCollection.newBuilder();
 			iBuilder.addValues((boolean) firstValue);
 			while (it.hasNext())
 				iBuilder.addValues((boolean) it.next());
 			vBuilder.setBooleanValues(iBuilder.build());
-		} else if (rawValue instanceof Enumerator) {
+		} else if (firstValue instanceof Enumerator) {
 			EnumerationValueCollection.Builder evBuilder = EnumerationValueCollection.newBuilder();
 			evBuilder.addValues(encode((Enumerator) firstValue));
 			while (it.hasNext())

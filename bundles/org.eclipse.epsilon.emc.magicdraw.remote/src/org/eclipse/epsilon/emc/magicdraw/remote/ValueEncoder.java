@@ -14,7 +14,8 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
 
 /**
- * Encodes values into the API {@link Value} type.
+ * Encodes values into the API {@link Value} type. This is
+ * used for sending values from EOL back to MagicDraw.
  *
  * Unlike the {@code .modelapi} ObjectEncoder, this one only uses the value
  * and has no access to the original EReference / EAttribute.
@@ -28,6 +29,20 @@ public class ValueEncoder {
 			return Value.newBuilder().setStringValue((String) value).build();
 		} else if (value instanceof Boolean) {
 			return Value.newBuilder().setBooleanValue((Boolean) value).build();
+		} else if (value instanceof Number) {
+			if (value instanceof Float) {
+				return Value.newBuilder().setFloatValue(((Number)value).floatValue()).build();
+			} else if (value instanceof Double) {
+				return Value.newBuilder().setDoubleValue(((Number)value).doubleValue()).build();
+			} else if (value instanceof Long) {
+				return Value.newBuilder().setLongValue(((Number)value).longValue()).build();
+			} else if (value instanceof Integer) {
+				return Value.newBuilder().setIntegerValue(((Number)value).intValue()).build();
+			} else if (value instanceof Short) {
+				return Value.newBuilder().setShortValue(((Number)value).shortValue()).build();
+			} else {
+				return Value.newBuilder().setByteValue(((Number)value).byteValue()).build();
+			}
 		} else if (value instanceof MDEnumerationLiteral) {
 			final MDEnumerationLiteral mdEnumLiteral = (MDEnumerationLiteral) value;
 			return Value.newBuilder().setEnumerationValue(mdEnumLiteral.toEnumerationValue()).build();
