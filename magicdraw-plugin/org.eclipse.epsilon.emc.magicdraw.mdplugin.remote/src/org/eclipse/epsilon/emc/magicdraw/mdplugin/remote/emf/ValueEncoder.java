@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.function.Predicate;
 
+import org.eclipse.emf.common.util.Enumerator;
 import org.eclipse.emf.common.util.TreeIterator;
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClassifier;
@@ -25,6 +26,8 @@ import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.BooleanCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.DoubleCollection;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.EnumerationValue;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.EnumerationValueCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.IntegerCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementCollection;
@@ -46,6 +49,14 @@ public class ValueEncoder {
 		}
 	}
 
+	public EnumerationValue encode(Enumerator literal) {
+		return EnumerationValue.newBuilder()
+			.setValue(literal.getValue())
+			.setLiteral(literal.getLiteral())
+			.setName(literal.getName())
+			.build();
+	}
+
 	private void encodeAttribute(final EAttribute eFeature, Value.Builder vBuilder, final Object rawValue) {
 		if (eFeature.isMany()) {
 			encodeManyScalarsAttribute(vBuilder, rawValue);
@@ -63,6 +74,8 @@ public class ValueEncoder {
 			vBuilder.setStringValue((String) rawValue);
 		} else if (rawValue instanceof Boolean) {
 			vBuilder.setBooleanValue((boolean) rawValue);
+		} else if (rawValue instanceof Enumerator) {
+			vBuilder.setEnumerationValue(encode((Enumerator) rawValue));
 		}
 	}
 
@@ -94,6 +107,12 @@ public class ValueEncoder {
 			while (it.hasNext())
 				iBuilder.addValues((boolean) it.next());
 			vBuilder.setBooleanValues(iBuilder.build());
+		} else if (rawValue instanceof Enumerator) {
+			EnumerationValueCollection.Builder evBuilder = EnumerationValueCollection.newBuilder();
+			evBuilder.addValues(encode((Enumerator) firstValue));
+			while (it.hasNext())
+				evBuilder.addValues(encode((Enumerator) it.next()));
+			vBuilder.setEnumerationValues(evBuilder.build());
 		}
 	}
 

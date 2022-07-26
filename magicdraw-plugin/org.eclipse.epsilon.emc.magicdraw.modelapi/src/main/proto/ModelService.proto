@@ -43,6 +43,16 @@ message ModelElementCollection {
     repeated ModelElement values =  1;
 }
 
+message EnumerationValue {
+    string name = 1;
+    sint32 value = 2;
+    string literal = 3;
+}
+
+message EnumerationValueCollection {
+    repeated EnumerationValue values = 1;
+}
+
 message Value {
     oneof value {
         string stringValue = 1;
@@ -50,12 +60,14 @@ message Value {
         sint64 longValue = 3;
         bool booleanValue = 4;
         ModelElement referenceValue = 5;
+        EnumerationValue enumerationValue = 13;
 
         StringCollection stringValues = 7;
         DoubleCollection doubleValues = 8;
         IntegerCollection longValues = 9;
         BooleanCollection booleanValues = 10;
         ModelElementCollection referenceValues = 11;
+        EnumerationValueCollection enumerationValues = 14;
 
         bool notDefined = 12;
     }
@@ -86,12 +98,6 @@ message GetTypeRequest {
 message GetEnumerationValueRequest {
     string enumeration = 1;
     string label = 2;
-}
-
-message GetEnumerationValueResponse {
-    string name = 1;
-    sint32 value = 2;
-    string literal = 3;
 }
 
 message GetElementByIDRequest {
@@ -127,7 +133,7 @@ service ModelService {
     // read API
     rpc allOf(AllOfRequest) returns (ModelElementCollection);
     rpc getElementByID(GetElementByIDRequest) returns (ModelElement);
-    rpc getEnumerationValue(GetEnumerationValueRequest) returns (GetEnumerationValueResponse);
+    rpc getEnumerationValue(GetEnumerationValueRequest) returns (EnumerationValue);
     rpc getFeatureValue(GetFeatureValueRequest) returns (Value);
     rpc getType(GetTypeRequest) returns (ModelElementType);
 

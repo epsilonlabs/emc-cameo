@@ -13,6 +13,7 @@ package org.eclipse.epsilon.emc.magicdraw.remote;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.epsilon.emc.magicdraw.modelapi.EnumerationValue;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetFeatureValueRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
@@ -37,6 +38,8 @@ public class MagicDrawPropertyGetter extends JavaPropertyGetter {
 				.setFeatureName(property)
 				.build();
 
+			// TODO many-valued lists should use proxy lists that allow for modification
+
 			Value response = model.getClient().getFeatureValue(request);
 			switch (response.getValueCase()) {
 			case BOOLEANVALUE: return response.getBooleanValue();
@@ -48,12 +51,21 @@ public class MagicDrawPropertyGetter extends JavaPropertyGetter {
 			case STRINGVALUE: return response.getStringValue();
 			case STRINGVALUES: return response.getStringValues();
 			case REFERENCEVALUE: return new MDModelElement(model, response.getReferenceValue());
-			case REFERENCEVALUES:
+			case REFERENCEVALUES: {
 				List<MDModelElement> elems = new ArrayList<>(response.getReferenceValues().getValuesCount());
 				for (ModelElement e : response.getReferenceValues().getValuesList()) {
 					elems.add(new MDModelElement(model, e));
 				}
 				return elems;
+			}
+			case ENUMERATIONVALUE: return new MDEnumerationLiteral(response.getEnumerationValue());
+			case ENUMERATIONVALUES: {
+				List<MDEnumerationLiteral> elems = new ArrayList<>(response.getEnumerationValues().getValuesCount());
+				for (EnumerationValue e : response.getEnumerationValues().getValuesList()) {
+					elems.add(new MDEnumerationLiteral(e));
+				}
+				return elems;
+			}
 			case NOTDEFINED: /* just let it trickle to the Java property getter */ break;
 			case VALUE_NOT_SET: return null; 
 			}

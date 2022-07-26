@@ -32,9 +32,9 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.CreateInstanceRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.DeleteInstanceRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Empty;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.EnumerationValue;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetElementByIDRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueRequest;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueResponse;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetFeatureValueRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetTypeRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
@@ -147,13 +147,41 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 				if (eFeature == null) {
 					vBuilder.setNotDefined(true);
 				} else {
-					final Object rawValue = mdObject.eGet(eFeature);
+					Object rawValue = mdObject.eGet(eFeature);
+					if (rawValue == null) {
+						/*
+						 * MagicDraw does not use default values consistently in their feature
+						 * declarations: for instance, a class with a public visibility will have
+						 * eGet(eFeature) return null, but getVisibility() will return the public
+						 * enumerator value. We use reflection in this case as a fallback.
+						 *
+						 * Normally we would check if the eType of the feature is an EEnum and
+						 * use the first literal as the default value [1], but it appears that the
+						 * visibility is a custom EDataTypeImpl class.
+						 *
+						 * [1]: https://www.eclipse.org/forums/index.php?t=msg&th=168434/
+						 */
+						try {
+							final String methodName = "get" + firstUppercase(eFeature.getName());
+							final Method mGetMethod = mdObject.getClass().getMethod(methodName);
+							rawValue = mGetMethod.invoke(mdObject);
+						} catch (Exception e) {
+							return Either.left(Status.INVALID_ARGUMENT.withDescription(String.format(
+								"Failed to use reflection to get value of feature %s from an object of type %s",
+								eFeature.getName(), getFullyQualifiedName(mdObject.eClass()))).asRuntimeException());
+						}
+					}
+
 					if (rawValue != null) {
 						encoder.encode(eFeature, vBuilder, rawValue);
 					}
 				}
 				return Either.right(vBuilder.build());
 			}));
+	}
+
+	private String firstUppercase(String featureName) {
+		return Character.toUpperCase(featureName.charAt(0)) + featureName.substring(1);
 	}
 
 	@Override
@@ -178,7 +206,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	}
 
 	@Override
-	public void getEnumerationValue(GetEnumerationValueRequest request, StreamObserver<GetEnumerationValueResponse> responseObserver) {
+	public void getEnumerationValue(GetEnumerationValueRequest request, StreamObserver<EnumerationValue> responseObserver) {
 		sendResponse(responseObserver, findEEnums(request.getEnumeration())
 			.flatMapRight((eEnumOptions) -> {
 				// Find the matching literal
@@ -197,11 +225,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 						.withDescription(String.format("Could not find enumeration value '%s' in '%s'", request.getLabel(), request.getEnumeration()))
 						.asRuntimeException());
 				} else {
-					return Either.right(GetEnumerationValueResponse.newBuilder()
-						.setValue(literal.getValue())
-						.setLiteral(literal.getLiteral())
-						.setName(literal.getName())
-						.build());
+					return Either.right(encoder.encode(literal));
 				}
 			}));
 	}

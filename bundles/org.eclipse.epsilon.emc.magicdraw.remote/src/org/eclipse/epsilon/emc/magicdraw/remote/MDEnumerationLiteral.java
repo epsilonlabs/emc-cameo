@@ -12,7 +12,7 @@ package org.eclipse.epsilon.emc.magicdraw.remote;
 
 import java.util.Objects;
 
-import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueResponse;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.EnumerationValue;
 
 /**
  * Represents an immutable EMF enumeration literal inside MagicDraw.
@@ -23,7 +23,7 @@ public class MDEnumerationLiteral {
 	private final String literal;
 	private final String name;
 
-	public MDEnumerationLiteral(GetEnumerationValueResponse response) {
+	public MDEnumerationLiteral(EnumerationValue response) {
 		this.value = response.getValue();
 		this.literal = response.getLiteral();
 		this.name = response.getName();

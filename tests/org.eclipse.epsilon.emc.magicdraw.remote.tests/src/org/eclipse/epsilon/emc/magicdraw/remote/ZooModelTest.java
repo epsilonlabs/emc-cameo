@@ -105,6 +105,17 @@ public class ZooModelTest {
 	}
 
 	@Test
+	public void enumLiteralGet() throws Exception {
+		EolModule module = new EolModule();
+		module.getContext().getModelRepository().addModel(m);
+		module.parse("return Class.all.selectOne(c|c.name='Animal').visibility;");
+
+		final Object rawResponse = module.execute();
+		assertNotNull("Fetching the enum-based visibility of the Animal class should return a non-null value", rawResponse);
+		assertEquals("The Animal class should be reported as public", "public", ((MDEnumerationLiteral) rawResponse).getName());
+	}
+
+	@Test
 	public void byID() {
 		assertEquals("uml::Class", ((MDModelElement) m.getElementById(CLASS_OBJECT_ID)).getTypeName());
 	}

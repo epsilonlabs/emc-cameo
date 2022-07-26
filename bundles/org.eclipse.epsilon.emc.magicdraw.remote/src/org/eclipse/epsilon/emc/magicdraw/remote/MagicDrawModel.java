@@ -23,9 +23,9 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.CreateInstanceRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.DeleteInstanceRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Empty;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.EnumerationValue;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetElementByIDRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueRequest;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueResponse;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetTypeRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementCollection;
@@ -174,7 +174,7 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 			.build();
 
 		try {
-			final GetEnumerationValueResponse response = client.getEnumerationValue(request);
+			final EnumerationValue response = client.getEnumerationValue(request);
 			return new MDEnumerationLiteral(response);
 		} catch (StatusRuntimeException ex) {
 			throw new EolEnumerationValueNotFoundException(enumeration, label, name);
