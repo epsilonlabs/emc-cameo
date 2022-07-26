@@ -172,6 +172,29 @@ public class ZooModelTest {
 				originalClassCount, classCount());
 	}
 
+	@Test
+	public void setClassName() throws Exception {
+		EolModule module = new EolModule();
+		module.getContext().getModelRepository().addModel(m);
+		module.parse("Class.all.selectOne(c|c.name = 'Animal').name = 'AnimalChanged';");
+		module.execute();
+
+		module.parse("return Class.all.selectOne(c|c.name = 'AnimalChanged');");
+		MDModelElement e = (MDModelElement) module.execute();
+		assertNotNull("The change to the name of the Animal class should have been performed", e);
+	}
+
+	@Test
+	public void unsetClassName() throws Exception {
+		EolModule module = new EolModule();
+		module.getContext().getModelRepository().addModel(m);
+		module.parse("Class.all.selectOne(c|c.name = 'Animal').name = null;");
+		module.execute();
+
+		module.parse("return Class.all.select(c|not c.name.isDefined()).size();");
+		assertEquals("There should be one class with an unset name", 1, module.execute());
+	}
+	
 	private int classCount() throws EolModelElementTypeNotFoundException {
 		return count("uml::Class");
 	}

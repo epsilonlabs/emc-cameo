@@ -112,6 +112,12 @@ message OpenSessionRequest {
     string description = 1;
 }
 
+message SetFeatureValueRequest {
+    string elementID = 1;
+    string featureName = 2;
+    Value newValue = 3;
+}
+
 // Main service
 
 service ModelService {
@@ -125,11 +131,13 @@ service ModelService {
     rpc getFeatureValue(GetFeatureValueRequest) returns (Value);
     rpc getType(GetTypeRequest) returns (ModelElementType);
 
-    // write API
+    // session API
     rpc openSession(OpenSessionRequest) returns (Empty);
     rpc closeSession(Empty) returns (Empty);
     rpc cancelSession(Empty) returns (Empty);
 
+    // write API
     rpc createInstance(CreateInstanceRequest) returns (ModelElement);
     rpc deleteInstance(DeleteInstanceRequest) returns (Empty);
+    rpc setFeatureValue(SetFeatureValueRequest) returns (Empty);
 }

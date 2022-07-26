@@ -114,6 +114,7 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 
 	public MagicDrawModel() {
 		propertyGetter = new MagicDrawPropertyGetter(this);
+		propertySetter = new MagicDrawPropertySetter(this);
 	}
 
 	protected ModelServiceBlockingStub getClient() {
@@ -266,7 +267,7 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	@Override
 	protected MDModelElement createInstanceInModel(String type)
 			throws EolModelElementTypeNotFoundException, EolNotInstantiableModelElementTypeException {
-		sessionState.ensureOpened();
+		ensureSessionOpened();
 
 		try {
 			ModelElement response = client.createInstance(CreateInstanceRequest.newBuilder().setTypeName(type).build());
@@ -306,7 +307,7 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 		}
 		MDModelElement mdElem = (MDModelElement) instance;
 
-		sessionState.ensureOpened();
+		ensureSessionOpened();
 		try {
 			client.deleteInstance(DeleteInstanceRequest.newBuilder()
 				.setElementID(mdElem.getElementID())
@@ -338,6 +339,10 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 		} else {
 			return Collections.emptyList();
 		}
+	}
+
+	protected void ensureSessionOpened() {
+		sessionState.ensureOpened();
 	}
 
 	private class GetTypeCacheLoader extends CacheLoader<String, Optional<ModelElementType>> {

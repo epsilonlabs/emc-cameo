@@ -26,7 +26,8 @@ import org.eclipse.emf.ecore.EEnumLiteral;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.epsilon.emc.magicdraw.mdplugin.remote.emf.ModelUtils;
-import org.eclipse.epsilon.emc.magicdraw.mdplugin.remote.emf.ObjectEncoder;
+import org.eclipse.epsilon.emc.magicdraw.mdplugin.remote.emf.ValueDecoder;
+import org.eclipse.epsilon.emc.magicdraw.mdplugin.remote.emf.ValueEncoder;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.CreateInstanceRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.DeleteInstanceRequest;
@@ -43,6 +44,7 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementTypeReference;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceConstants;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceGrpc;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.OpenSessionRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.SetFeatureValueRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,7 +105,8 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ModelAccessService.class);
 	private static final String GRPC_DOMAIN = ModelAccessService.class.getPackage().getName();
 
-	private final ObjectEncoder encoder = new ObjectEncoder();
+	private final ValueEncoder encoder = new ValueEncoder();
+	private final ValueDecoder decoder = new ValueDecoder();
 
 	@Override
 	public void allOf(AllOfRequest request, StreamObserver<ModelElementCollection> responseObserver) {
@@ -136,19 +139,11 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	@Override
 	public void getFeatureValue(GetFeatureValueRequest request, StreamObserver<Value> responseObserver) {
 		sendResponse(responseObserver, inProject()
-			.flatMapRight((project) -> {
-				final MDObject mdObject = (MDObject) project.getElementByID(request.getElementID());
-				if (mdObject == null) {
-					return Either.left(Status.INVALID_ARGUMENT
-						.withDescription(String.format("No object exists with ID '%s'", request.getElementID()))
-						.asRuntimeException());
-				} else {
-					return Either.right(mdObject);
-				}
-			}).flatMapRight((mdObject) -> {
+			.flatMapRight((project) -> getElementByID(project, request.getElementID()))
+			.flatMapRight((mdObject) -> {
 				final Value.Builder vBuilder = Value.newBuilder();
 				final EStructuralFeature eFeature = mdObject.eClass()
-						.getEStructuralFeature(request.getFeatureName());
+					.getEStructuralFeature(request.getFeatureName());
 				if (eFeature == null) {
 					vBuilder.setNotDefined(true);
 				} else {
@@ -160,7 +155,6 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 				return Either.right(vBuilder.build());
 			}));
 	}
-
 
 	@Override
 	public void getType(GetTypeRequest request, StreamObserver<ModelElementType> responseObserver) {
@@ -317,6 +311,30 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 					}
 				});
 		})));
+	}
+
+	@Override
+	public void setFeatureValue(SetFeatureValueRequest request, StreamObserver<Empty> responseObserver) {
+		sendResponse(responseObserver, inProject().flatMapRight(
+			(project) -> inSession(project).flatMapRight((sessionManager) -> {
+				return getElementByID(project, request.getElementID()).flatMapRight((mdObject) -> {
+					final EStructuralFeature eFeature = mdObject.eClass()
+						.getEStructuralFeature(request.getFeatureName());
+
+					Object decoded;
+					try {
+						decoded = decoder.decode(eFeature, request.getNewValue());
+					} catch (IllegalArgumentException ex) {
+						return Either.left(Status.INVALID_ARGUMENT
+							.withDescription(String.format("Could not decode value kind %s", request.getNewValue().getValueCase().name()))
+							.asRuntimeException());
+					}
+
+					mdObject.eSet(eFeature, decoded);
+					return Either.right(Empty.newBuilder().build());
+				});
+			})
+		));
 	}
 
 	private Either<StatusRuntimeException, EClassifier> findEClassifier(String typeName) {

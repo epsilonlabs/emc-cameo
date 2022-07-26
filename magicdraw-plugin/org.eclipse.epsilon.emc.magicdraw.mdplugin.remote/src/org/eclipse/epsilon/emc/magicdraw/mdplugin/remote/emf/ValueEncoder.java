@@ -36,7 +36,7 @@ import com.nomagic.magicdraw.foundation.MDObject;
 /**
  * Encodes objects and values into the API types.
  */
-public class ObjectEncoder {
+public class ValueEncoder {
 
 	public void encode(final EStructuralFeature eFeature, Value.Builder vBuilder, final Object rawValue) {
 		if (eFeature instanceof EAttribute) {
