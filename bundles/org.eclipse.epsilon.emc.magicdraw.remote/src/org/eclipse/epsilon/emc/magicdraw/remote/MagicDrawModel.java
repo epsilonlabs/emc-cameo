@@ -71,10 +71,17 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	private String rootElementHyperlink;
 
 	/**
-	 * Thread-safe way of ensuring we have a session opened when needed.
+	 * <p>Thread-safe way of ensuring we have a session opened when needed.</p>
 	 *
-	 * See <a href="https://docs.nomagic.com/display/MD2021x/Creating+new+model+elements">the MagicDraw documentation</a>
-	 * on the need to manage editing sessions, to ensure transactional semantics and undo support.
+	 * <p>See <a href=
+	 * "https://docs.nomagic.com/display/MD2021x/Creating+new+model+elements">the
+	 * MagicDraw documentation</a> on the need to manage editing sessions, to ensure
+	 * transactional semantics and undo support.</p>
+	 *
+	 * <p>Note that these transactional semantics do not extend to diagrams,
+	 * apparently: if you delete an element in an editing session and then roll it
+	 * back, the model element will be restored but not its appearances on diagrams.
+	 * This appears to be a limitation in MagicDraw/Cameo.</p>
 	 */
 	private class SessionState {
 		private volatile boolean active;
