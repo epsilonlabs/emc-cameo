@@ -88,3 +88,4 @@ While developing, it is best to run MagicDraw in verbose mode from a console, to
 * [Blog post on using Xtend from a Cameo/MagicDraw plugin](https://blogs.itemis.com/en/model-transformations-for-mbse-with-cameo-and-xtend)
 * [MagicDraw 2021x Developer Guide](https://docs.nomagic.com/display/MD2021x/Developer+Guide)
 * [MagicDraw OpenAPI User Guide](https://www.magicdraw.com/files/manuals/MagicDraw%20OpenAPI%20UserGuide.pdf)
+* [MagicDraw UML Metamodel](https://docs.nomagic.com/display/MD2021x/UML+2.5.1+Meta+Model)
