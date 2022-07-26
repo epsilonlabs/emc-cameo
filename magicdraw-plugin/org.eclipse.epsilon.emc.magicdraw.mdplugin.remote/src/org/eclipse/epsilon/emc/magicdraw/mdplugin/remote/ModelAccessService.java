@@ -320,13 +320,20 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 				return getElementByID(project, request.getElementID()).flatMapRight((mdObject) -> {
 					final EStructuralFeature eFeature = mdObject.eClass()
 						.getEStructuralFeature(request.getFeatureName());
+					if (eFeature == null) {
+						return Either.left(Status.INVALID_ARGUMENT
+							.withDescription(String.format("Feature %s does not exist in type %s",
+								request.getFeatureName(), getFullyQualifiedName(mdObject.eClass())))
+							.asRuntimeException());
+					}
 
 					Object decoded;
 					try {
 						decoded = decoder.decode(eFeature, request.getNewValue());
 					} catch (IllegalArgumentException ex) {
 						return Either.left(Status.INVALID_ARGUMENT
-							.withDescription(String.format("Could not decode value kind %s", request.getNewValue().getValueCase().name()))
+							.withDescription(String.format("Could not decode value kind %s",
+								request.getNewValue().getValueCase().name()))
 							.asRuntimeException());
 					}
 

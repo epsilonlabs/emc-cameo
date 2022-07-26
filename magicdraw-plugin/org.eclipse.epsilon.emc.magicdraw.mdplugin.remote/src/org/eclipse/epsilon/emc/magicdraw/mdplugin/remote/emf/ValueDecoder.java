@@ -25,6 +25,7 @@ public class ValueDecoder {
 		// TODO
 		switch (value.getValueCase()) {
 		case STRINGVALUE: return value.getStringValue();
+		case BOOLEANVALUE: return value.getBooleanValue();
 		case NOTDEFINED: return null;
 		}
 

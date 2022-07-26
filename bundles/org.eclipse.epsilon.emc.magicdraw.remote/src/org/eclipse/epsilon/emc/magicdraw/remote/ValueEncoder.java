@@ -23,12 +23,13 @@ public class ValueEncoder {
 	public Value encode(Object value) {
 		if (value == null) {
 			return Value.newBuilder().setNotDefined(true).build();
-		} if (value instanceof String) {
+		} else if (value instanceof String) {
 			return Value.newBuilder().setStringValue((String) value).build();
+		} else if (value instanceof Boolean) {
+			return Value.newBuilder().setBooleanValue((Boolean) value).build();
 		}
 
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException(String.format("Cannot encode values of type %s", value.getClass().getName()));
 	}
 	
 }

@@ -19,6 +19,7 @@ import java.util.Collection;
 
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.eol.EolModule;
+import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.exceptions.models.EolEnumerationValueNotFoundException;
 import org.eclipse.epsilon.eol.exceptions.models.EolModelElementTypeNotFoundException;
 import org.eclipse.epsilon.eol.exceptions.models.EolModelLoadingException;
@@ -194,7 +195,33 @@ public class ZooModelTest {
 		module.parse("return Class.all.select(c|not c.name.isDefined()).size();");
 		assertEquals("There should be one class with an unset name", 1, module.execute());
 	}
-	
+
+	@Test
+	public void setClassActive() throws Exception {
+		EolModule module = new EolModule();
+		module.getContext().getModelRepository().addModel(m);
+
+		// Given the Animal class is intially passive...
+		module.parse("return Class.all.selectOne(c|c.name = 'Animal').isActive;");
+		assertFalse("Initially, the Animal class should be passive", (Boolean) module.execute());
+
+		// When we set it to be active...
+		module.parse("Class.all.selectOne(c|c.name = 'Animal').isActive = true;");
+		module.execute();
+
+		// Then a get on the active property should return true
+		module.parse("return Class.all.selectOne(c|c.name = 'Animal').isActive;");
+		assertTrue("Making Animal into an active class should be noticed by the following get", (Boolean) module.execute());
+	}
+
+	@Test(expected=EolRuntimeException.class)
+	public void setMissingFields() throws Exception {
+		EolModule module = new EolModule();
+		module.getContext().getModelRepository().addModel(m);
+		module.parse("Class.all.selectOne(c|c.name = 'Animal').iDoNotExist = true;");
+		module.execute();
+	}
+
 	private int classCount() throws EolModelElementTypeNotFoundException {
 		return count("uml::Class");
 	}
