@@ -353,7 +353,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 
 					Object decoded;
 					try {
-						decoded = decoder.decode(eFeature, request.getNewValue());
+						decoded = decoder.decode(project, eFeature, request.getNewValue());
 					} catch (IllegalArgumentException ex) {
 						return Either.left(Status.INVALID_ARGUMENT
 							.withDescription(String.format("Could not decode value kind %s",

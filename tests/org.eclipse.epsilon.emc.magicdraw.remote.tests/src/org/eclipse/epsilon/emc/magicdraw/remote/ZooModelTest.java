@@ -185,7 +185,7 @@ public class ZooModelTest {
 	}
 
 	@Test
-	public void setClassName() throws Exception {
+	public void setStringAttribute() throws Exception {
 		EolModule module = new EolModule();
 		module.getContext().getModelRepository().addModel(m);
 		module.parse("Class.all.selectOne(c|c.name = 'Animal').name = 'AnimalChanged';");
@@ -197,7 +197,7 @@ public class ZooModelTest {
 	}
 
 	@Test
-	public void unsetClassName() throws Exception {
+	public void unsetStringAttribute() throws Exception {
 		EolModule module = new EolModule();
 		module.getContext().getModelRepository().addModel(m);
 		module.parse("Class.all.selectOne(c|c.name = 'Animal').name = null;");
@@ -208,7 +208,7 @@ public class ZooModelTest {
 	}
 
 	@Test
-	public void setClassActive() throws Exception {
+	public void setBooleanAttribute() throws Exception {
 		EolModule module = new EolModule();
 		module.getContext().getModelRepository().addModel(m);
 
@@ -226,7 +226,7 @@ public class ZooModelTest {
 	}
 
 	@Test
-	public void setClassVisibility() throws Exception {
+	public void setEnumerationAttribute() throws Exception {
 		EolModule module = new EolModule();
 		module.getContext().getModelRepository().addModel(m);
 		module.parse("return Class.all.select(c|c.visibility = uml::VisibilityKind#private).size();");
@@ -238,7 +238,25 @@ public class ZooModelTest {
 		module.parse("return Class.all.select(c|c.visibility = uml::VisibilityKind#private).size();");
 		assertEquals("After the assignment, there should be one private class", 1, module.execute());
 	}
-	
+
+	@Test
+	public void setSingleReference() throws Exception {
+		EolModule module = new EolModule();
+		module.getContext().getModelRepository().addModel(m);
+
+		// Given the original owning package of Lion was the main Model one
+		module.parse("return Class.all.selectOne(c|c.name = 'Lion').owningPackage.name;");
+		assertEquals("At first, the name of the owning package for Lion should be Model", "Model", module.execute());
+
+		// When we change the owning package to a new one
+		module.parse("var p = new uml::Package; p.name = 'NewPackage'; Class.all.selectOne(c|c.name='Lion').owningPackage = p;");
+		module.execute();
+
+		// Then the change should be reflected back on the model
+		module.parse("return Class.all.selectOne(c|c.name = 'Lion').owningPackage.name;");
+		assertEquals("After the assignment, the name of the owning package for Lion should be NewPackage", "NewPackage", module.execute());
+	}
+
 	@Test(expected=EolRuntimeException.class)
 	public void setMissingFields() throws Exception {
 		EolModule module = new EolModule();

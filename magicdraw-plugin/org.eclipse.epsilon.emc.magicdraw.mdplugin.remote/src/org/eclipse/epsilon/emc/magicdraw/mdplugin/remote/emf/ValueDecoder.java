@@ -14,7 +14,10 @@ import org.eclipse.emf.ecore.EDataType;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
+
+import com.nomagic.magicdraw.core.Project;
 
 /**
  *  Decodes {@link Value} objects into raw values that can be used
@@ -23,7 +26,7 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
  */
 public class ValueDecoder {
 
-	public Object decode(EStructuralFeature targetFeature, Value value) {
+	public Object decode(Project project, EStructuralFeature targetFeature, Value value) {
 		// TODO need to add all possible options
 
 		switch (value.getValueCase()) {
@@ -33,6 +36,10 @@ public class ValueDecoder {
 			final EDataType eDataType = (EDataType) targetFeature.getEType();
 			final String literal = value.getEnumerationValue().getLiteral();
 			return EcoreUtil.createFromString(eDataType, literal);
+		}
+		case REFERENCEVALUE: {
+			final ModelElement elem = value.getReferenceValue();
+			return project.getElementByID(elem.getElementID());
 		}
 		case NOTDEFINED: return null;
 		}

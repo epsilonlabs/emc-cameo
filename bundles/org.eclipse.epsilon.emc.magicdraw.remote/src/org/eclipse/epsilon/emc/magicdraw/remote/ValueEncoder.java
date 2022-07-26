@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.epsilon.emc.magicdraw.remote;
 
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
 
 /**
@@ -30,6 +31,13 @@ public class ValueEncoder {
 		} else if (value instanceof MDEnumerationLiteral) {
 			final MDEnumerationLiteral mdEnumLiteral = (MDEnumerationLiteral) value;
 			return Value.newBuilder().setEnumerationValue(mdEnumLiteral.toEnumerationValue()).build();
+		} else if (value instanceof MDModelElement) {
+			final MDModelElement mdElem = (MDModelElement) value;
+			return Value.newBuilder().setReferenceValue(ModelElement.newBuilder()
+				.setElementID(mdElem.getElementID())
+				.setMetamodelUri(mdElem.getMetamodelUri())
+				.setTypeName(mdElem.getTypeName())
+				.build()).build();
 		}
 
 		throw new UnsupportedOperationException(String.format("Cannot encode values of type %s", value.getClass().getName()));
