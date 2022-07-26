@@ -27,6 +27,9 @@ public class ValueEncoder {
 			return Value.newBuilder().setStringValue((String) value).build();
 		} else if (value instanceof Boolean) {
 			return Value.newBuilder().setBooleanValue((Boolean) value).build();
+		} else if (value instanceof MDEnumerationLiteral) {
+			final MDEnumerationLiteral mdEnumLiteral = (MDEnumerationLiteral) value;
+			return Value.newBuilder().setEnumerationValue(mdEnumLiteral.toEnumerationValue()).build();
 		}
 
 		throw new UnsupportedOperationException(String.format("Cannot encode values of type %s", value.getClass().getName()));

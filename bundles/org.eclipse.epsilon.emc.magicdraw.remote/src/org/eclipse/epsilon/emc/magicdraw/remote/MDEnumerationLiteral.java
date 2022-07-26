@@ -29,6 +29,17 @@ public class MDEnumerationLiteral {
 		this.name = response.getName();
 	}
 
+	/**
+	 * Turns this object back into a gRPC-based EnumerationValue.
+	 */
+	public EnumerationValue toEnumerationValue() {
+		return EnumerationValue.newBuilder()
+			.setValue(value)
+			.setLiteral(literal)
+			.setName(name)
+			.build();
+	}
+
 	public int getValue() {
 		return value;
 	}

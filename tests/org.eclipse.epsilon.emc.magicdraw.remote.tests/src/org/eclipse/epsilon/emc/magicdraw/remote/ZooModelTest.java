@@ -225,6 +225,20 @@ public class ZooModelTest {
 		assertTrue("Making Animal into an active class should be noticed by the following get", (Boolean) module.execute());
 	}
 
+	@Test
+	public void setClassVisibility() throws Exception {
+		EolModule module = new EolModule();
+		module.getContext().getModelRepository().addModel(m);
+		module.parse("return Class.all.select(c|c.visibility = uml::VisibilityKind#private).size();");
+		assertEquals("At first, there should be no private classes", 0, module.execute());
+
+		module.parse("Class.all.selectOne(c|c.name = 'Animal').visibility = uml::VisibilityKind#private;");
+		module.execute();
+
+		module.parse("return Class.all.select(c|c.visibility = uml::VisibilityKind#private).size();");
+		assertEquals("After the assignment, there should be one private class", 1, module.execute());
+	}
+	
 	@Test(expected=EolRuntimeException.class)
 	public void setMissingFields() throws Exception {
 		EolModule module = new EolModule();
