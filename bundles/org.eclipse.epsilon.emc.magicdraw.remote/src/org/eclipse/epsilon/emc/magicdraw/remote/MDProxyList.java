@@ -18,8 +18,8 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.ProxyList;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
 
 /**
- * This is a proxy for an EList inside MagicDraw. All list operations are
- * delegated to the running MagicDraw instance.
+ * This is a proxy for an EList inside MagicDraw. All core list operations
+ * are delegated to the running MagicDraw instance.
  */
 public class MDProxyList extends AbstractList<Object> {
 
@@ -63,10 +63,6 @@ public class MDProxyList extends AbstractList<Object> {
 		return model.getPropertyGetter().decodeValue(oldValue);
 	}
 
-	/**
-	 * @param index
-	 * @return
-	 */
 	private ListPosition createListPosition(int index) {
 		return ListPosition.newBuilder()
 				.setList(proxyList).setPosition(index).build();
@@ -83,7 +79,8 @@ public class MDProxyList extends AbstractList<Object> {
 	/* EList-inspired operations */
 	
 	public void move(int newPosition, Object e) {
-		// TODO
+		final Value value = model.encoder.encode(e);
+		model.client.listMoveObject(createListPositionValue(newPosition, value));
 	}
 
 	public Object move(int newPosition, int oldPosition) {

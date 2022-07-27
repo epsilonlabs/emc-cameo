@@ -201,4 +201,5 @@ service ModelService {
     rpc listSet(ListPositionValue) returns (Value);
     rpc listAdd(ListPositionValue) returns (Empty);
     rpc listRemove(ListPosition) returns (Value);
+    rpc listMoveObject(ListPositionValue) returns (Empty);
 }

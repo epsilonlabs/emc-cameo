@@ -414,9 +414,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 						encoder.encode(mdObject, eFeature, vb, oldValue);
 						return Either.right(Value.newBuilder().build());
 					} catch (UnsupportedOperationException ex) {
-						return Either.left(Status.INVALID_ARGUMENT
-							.withDescription(String.format("Feature %s in %s is not a modifiable list: it may be a derived feature", eFeature.getName(), getFullyQualifiedName(mdObject.eClass())))
-							.asRuntimeException());
+						return Either.left(exListNotModifiable(mdObject, eFeature));
 					}
 				}))
 			)));
@@ -435,9 +433,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 						eList.add(request.getPosition(), newValue);
 						return Either.right(Empty.newBuilder().build());
 					} catch (UnsupportedOperationException ex) {
-						return Either.left(Status.INVALID_ARGUMENT
-							.withDescription(String.format("Feature %s in %s is not a modifiable list: it may be a derived feature", eFeature.getName(), getFullyQualifiedName(mdObject.eClass())))
-							.asRuntimeException());
+						return Either.left(exListNotModifiable(mdObject, eFeature));
 					}
 				}))
 			)));
@@ -456,12 +452,34 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 					encoder.encode(mdObject, eFeature, vb, oldValue);
 					return Either.right(vb.build());
 				} catch (UnsupportedOperationException ex) {
-					return Either.left(Status.INVALID_ARGUMENT
-						.withDescription(String.format("Feature %s in %s is not a modifiable list: it may be a derived feature", eFeature.getName(), getFullyQualifiedName(mdObject.eClass())))
-						.asRuntimeException());
+					return Either.left(exListNotModifiable(mdObject, eFeature));
 				}
 			}))
 		)));
+	}
+
+	@Override
+	public void listMoveObject(ListPositionValue request, StreamObserver<Empty> responseObserver) {
+		sendResponse(responseObserver, inProject()
+				.flatMapRight((project) -> getElementByID(project, request.getList().getElementID())
+				.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getList().getFeatureName())
+				.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
+				.flatMapRight((eList) -> {
+					try {
+						Object toBeMoved = decoder.decode(project, eFeature, request.getValue());
+						eList.move(request.getPosition(), toBeMoved);
+						return Either.right(Empty.newBuilder().build());
+					} catch (UnsupportedOperationException ex) {
+						return Either.left(exListNotModifiable(mdObject, eFeature));
+					}
+				}))
+			)));
+	}
+
+	private StatusRuntimeException exListNotModifiable(MDObject mdObject, EStructuralFeature eFeature) {
+		return Status.INVALID_ARGUMENT
+			.withDescription(String.format("Feature %s in %s is not a modifiable list: it may be a derived feature", eFeature.getName(), getFullyQualifiedName(mdObject.eClass())))
+			.asRuntimeException();
 	}
 
 	private Either<StatusRuntimeException, EList<Object>> getEListForProxyList(ProxyList request) {
