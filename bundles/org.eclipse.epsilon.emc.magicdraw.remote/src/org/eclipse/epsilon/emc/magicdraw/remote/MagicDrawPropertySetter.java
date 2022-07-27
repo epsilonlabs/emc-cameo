@@ -18,7 +18,6 @@ import org.eclipse.epsilon.eol.execute.introspection.java.JavaPropertySetter;
 public class MagicDrawPropertySetter extends JavaPropertySetter {
 
 	private final MagicDrawModel model;
-	private final ValueEncoder encoder = new ValueEncoder();
 
 	public MagicDrawPropertySetter(MagicDrawModel magicDrawModel) {
 		this.model = magicDrawModel;
@@ -33,10 +32,10 @@ public class MagicDrawPropertySetter extends JavaPropertySetter {
 			SetFeatureValueRequest request = SetFeatureValueRequest.newBuilder()
 				.setElementID(mdElem.getElementID())
 				.setFeatureName(property)
-				.setNewValue(encoder.encode(value))
+				.setNewValue(model.encoder.encode(value))
 				.build();
 
-			model.getClient().setFeatureValue(request);
+			model.client.setFeatureValue(request);
 		} else {
 			super.invoke(target, property, value, context);
 		}

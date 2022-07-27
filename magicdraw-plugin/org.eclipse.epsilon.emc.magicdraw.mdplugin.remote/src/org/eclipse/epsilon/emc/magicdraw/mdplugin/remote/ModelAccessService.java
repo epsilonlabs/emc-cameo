@@ -40,6 +40,7 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetFeatureValueRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetTypeRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ListGetRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ListPositionValue;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementType;
@@ -64,6 +65,7 @@ import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.magicdraw.uml.Finder;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageableElement;
 import com.nomagic.uml2.impl.ElementsFactory;
 
 import io.grpc.Metadata;
@@ -291,7 +293,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 						try {
 							Method mCreateInstance = factory.getClass().getMethod(methodName);
 							MDObject mdObject = (MDObject) mCreateInstance.invoke(factory);
-							if (mdObject instanceof Element) {
+							if (mdObject instanceof PackageableElement) {
 								// TODO support a rootElementHyperlink option for indicating where model elements should be created
 								ModelElementsManager.getInstance().addElement((Element) mdObject, project.getPrimaryModel());
 							}
@@ -393,6 +395,29 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 					Value.Builder vb = Value.newBuilder();
 					encoder.encode(mdObject, eFeature, vb, eList.get(request.getPosition()));
 					return Either.right(vb.build());
+				}))
+			)));
+	}
+
+	@Override
+	public void listSet(ListPositionValue request, StreamObserver<Value> responseObserver) {
+		sendResponse(responseObserver,
+				inProject()
+				.flatMapRight((project) -> getElementByID(project, request.getList().getElementID())
+				.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getList().getFeatureName())
+				.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
+				.flatMapRight((eList) -> {
+					Object newValue = decoder.decode(project, eFeature, request.getValue());
+					try {
+						Object oldValue = eList.set(request.getPosition(), newValue);
+						Value.Builder vb = Value.newBuilder();
+						encoder.encode(mdObject, eFeature, vb, oldValue);
+						return Either.right(Value.newBuilder().build());
+					} catch (UnsupportedOperationException ex) {
+						return Either.left(Status.INVALID_ARGUMENT
+							.withDescription(String.format("Feature %s in %s is not a modifiable list: it may be a derived feature", eFeature.getName(), getFullyQualifiedName(mdObject.eClass())))
+							.asRuntimeException());
+					}
 				}))
 			)));
 	}

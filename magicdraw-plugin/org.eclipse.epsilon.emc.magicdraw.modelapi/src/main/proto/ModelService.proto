@@ -166,6 +166,12 @@ message ListGetRequest {
     uint32 position = 2;
 }
 
+message ListPositionValue {
+    ProxyList list = 1;
+    uint32 position = 2;
+    Value value = 3;
+}
+
 // Main service
 
 service ModelService {
@@ -192,4 +198,5 @@ service ModelService {
     // proxy list API
     rpc listSize(ProxyList) returns (SingleInteger);
     rpc listGet(ListGetRequest) returns (Value);
+    rpc listSet(ListPositionValue) returns (Value);
 }

@@ -301,9 +301,31 @@ public class ZooModelTest {
 		assertEquals("Lion should have one superclass named Animal", "Animal", module.execute());
 	}
 
-	/**
-	 * @return
-	 */
+	@Test(expected=EolRuntimeException.class)
+	public void setListElementNotModifiable() throws Exception {
+		EolModule module = createEOLModule();
+		module.parse("Class.all.selectOne(c|c.name = 'Lion').superClass.set(0, Class.all.selectOne(c|c.name = 'Elephant'));");
+		module.execute();
+	}
+
+	@Test
+	public void setListElement() throws Exception {
+		EolModule module = createEOLModule();
+		module.parse("var lion = Class.all.selectOne(c|c.name='Lion'); "
+				+ "var g = new Generalization; "
+				+ "lion.generalization.set(0, g); "
+				+ "g.source = lion; "
+				+ "g.target = Class.all.selectOne(c|c.name = 'Elephant'); "
+		);
+		module.execute();
+
+		module.parse("return Class.all.selectOne(c | c.name = 'Lion').superClass.first.name;");
+		assertEquals("Elephant should be the new superclass of Lion", "Elephant", module.execute());
+
+		module.parse("return Class.all.selectOne(c | c.name = 'Lion').superClass.size();");
+		assertEquals("Elephant should only have one superclass", 1, module.execute());
+	}
+
 	private EolModule createEOLModule() {
 		EolModule module = new EolModule();
 		module.getContext().getModelRepository().addModel(m);

@@ -67,9 +67,11 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 			.build(new GetTypeCacheLoader());
 
 	private ManagedChannel channel;
-	private ModelServiceBlockingStub client;
+	protected ModelServiceBlockingStub client;
 
 	private String rootElementHyperlink;
+
+	protected final ValueEncoder encoder = new ValueEncoder();
 
 	/**
 	 * <p>Thread-safe way of ensuring we have a session opened when needed.</p>
@@ -133,10 +135,6 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	@Override
 	public IPropertySetter getPropertySetter() {
 		return (MagicDrawPropertySetter) propertySetter;
-	}
-
-	protected ModelServiceBlockingStub getClient() {
-		return client;
 	}
 
 	public String getRootElementHyperlink() {

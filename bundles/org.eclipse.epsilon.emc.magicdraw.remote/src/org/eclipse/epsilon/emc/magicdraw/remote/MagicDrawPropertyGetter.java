@@ -34,7 +34,7 @@ public class MagicDrawPropertyGetter extends JavaPropertyGetter {
 				.setFeatureName(property)
 				.build();
 
-			Value response = model.getClient().getFeatureValue(request);
+			Value response = model.client.getFeatureValue(request);
 			if (response.getValueCase() != ValueCase.NOTDEFINED) {
 				return decodeValue(response);
 			}

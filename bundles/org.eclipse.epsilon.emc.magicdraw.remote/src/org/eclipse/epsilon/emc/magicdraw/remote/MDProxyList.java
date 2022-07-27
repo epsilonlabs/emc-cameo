@@ -13,6 +13,7 @@ package org.eclipse.epsilon.emc.magicdraw.remote;
 import java.util.AbstractList;
 
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ListGetRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ListPositionValue;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ProxyList;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
 
@@ -32,12 +33,12 @@ public class MDProxyList extends AbstractList<Object> {
 
 	@Override
 	public int size() {
-		return model.getClient().listSize(proxyList).getValue();
+		return model.client.listSize(proxyList).getValue();
 	}
 
 	@Override
 	public Object get(int index) {
-		Value value = model.getClient().listGet(ListGetRequest.newBuilder()
+		Value value = model.client.listGet(ListGetRequest.newBuilder()
 			.setList(proxyList)
 			.setPosition(index)
 			.build());
@@ -47,8 +48,14 @@ public class MDProxyList extends AbstractList<Object> {
 
 	@Override
 	public Object set(int index, Object element) {
-		// TODO Auto-generated method stub
-		return super.set(index, element);
+		Value value = model.encoder.encode(element);
+		Value oldValue = model.client.listSet(ListPositionValue.newBuilder()
+			.setList(proxyList)
+			.setPosition(index)
+			.setValue(value)
+			.build());
+
+		return model.getPropertyGetter().decodeValue(oldValue);
 	}
 
 	@Override

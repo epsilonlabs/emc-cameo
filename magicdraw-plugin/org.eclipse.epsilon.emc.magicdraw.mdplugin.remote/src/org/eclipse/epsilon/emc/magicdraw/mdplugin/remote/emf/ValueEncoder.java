@@ -33,9 +33,11 @@ import com.nomagic.magicdraw.foundation.MDObject;
  */
 public class ValueEncoder {
 
+	/**
+	 * Encodes a single value for a given feature. For many-valued features,
+	 * it assumes that the {@code rawValue} is an element of the list.
+	 */
 	public void encode(final MDObject mdObject, final EStructuralFeature eFeature, Value.Builder vBuilder, final Object rawValue) {
-		assert !eFeature.isMany() : "ValueEncoder should only be used for single-valued features";
-
 		if (eFeature instanceof EAttribute) {
 			encodeScalarAttribute(vBuilder, rawValue);
 		} else {
