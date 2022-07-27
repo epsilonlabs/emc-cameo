@@ -380,8 +380,12 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 
 	@Override
 	public void listSize(ProxyList request, StreamObserver<SingleInteger> responseObserver) {
-		sendResponse(responseObserver, getEListForProxyList(request)
-			.flatMapRight((eList) -> Either.right(SingleInteger.newBuilder().setValue(eList.size()).build())));
+		sendResponse(responseObserver, inProject()
+			.flatMapRight((project) -> getElementByID(project, request.getElementID())
+			.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getFeatureName())
+			.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
+			.flatMapRight((eList) -> Either.right(SingleInteger.newBuilder().setValue(eList.size()).build())
+		)))));
 	}
 
 	@Override
@@ -469,6 +473,24 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 					try {
 						Object toBeMoved = decoder.decode(project, eFeature, request.getValue());
 						eList.move(request.getPosition(), toBeMoved);
+						return Either.right(Empty.newBuilder().build());
+					} catch (UnsupportedOperationException ex) {
+						return Either.left(exListNotModifiable(mdObject, eFeature));
+					}
+				})))
+			)));
+	}
+
+	@Override
+	public void listClear(ProxyList request, StreamObserver<Empty> responseObserver) {
+		sendResponse(responseObserver, inProject()
+				.flatMapRight((project) -> inSession(project)
+				.flatMapRight((sm) -> getElementByID(project, request.getElementID())
+				.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getFeatureName())
+				.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
+				.flatMapRight((eList) -> {
+					try {
+						eList.clear();
 						return Either.right(Empty.newBuilder().build());
 					} catch (UnsupportedOperationException ex) {
 						return Either.left(exListNotModifiable(mdObject, eFeature));

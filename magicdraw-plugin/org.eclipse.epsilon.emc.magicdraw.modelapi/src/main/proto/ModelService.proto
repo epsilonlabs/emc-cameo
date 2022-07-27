@@ -202,4 +202,5 @@ service ModelService {
     rpc listAdd(ListPositionValue) returns (Empty);
     rpc listRemove(ListPosition) returns (Value);
     rpc listMoveObject(ListPositionValue) returns (Empty);
+    rpc listClear(ProxyList) returns (Empty);
 }

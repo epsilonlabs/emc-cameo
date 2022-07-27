@@ -64,6 +64,12 @@ public class MDProxyList extends AbstractList<Object> {
 		return model.getPropertyGetter().decodeValue(oldValue);
 	}
 
+	@Override
+	public void clear() {
+		model.ensureSessionOpened();
+		model.client.listClear(proxyList);
+	}
+
 	private ListPosition createListPosition(int index) {
 		return ListPosition.newBuilder()
 				.setList(proxyList).setPosition(index).build();
