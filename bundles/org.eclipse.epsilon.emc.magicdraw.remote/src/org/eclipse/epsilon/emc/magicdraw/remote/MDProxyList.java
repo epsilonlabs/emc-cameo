@@ -83,9 +83,13 @@ public class MDProxyList extends AbstractList<Object> {
 		model.client.listMoveObject(createListPositionValue(newPosition, value));
 	}
 
-	public Object move(int newPosition, int oldPosition) {
-		// TODO
-		return null;
-	}
+	/*
+	 * NOTE:
+	 *
+	 * <code>public Object move(int newPosition, int oldPosition)</code>
+	 *
+	 * is not implemented yet as it is inaccessible from Epsilon. Epsilon's
+	 * reflective lookup confuses it with the {@link move(int, Object)} version.
+	 */
 
 }
