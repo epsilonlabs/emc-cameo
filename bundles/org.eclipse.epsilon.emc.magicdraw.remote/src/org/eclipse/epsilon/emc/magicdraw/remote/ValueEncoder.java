@@ -53,6 +53,9 @@ public class ValueEncoder {
 				.setMetamodelUri(mdElem.getMetamodelUri())
 				.setTypeName(mdElem.getTypeName())
 				.build()).build();
+		} else if (value instanceof MDProxyList) {
+			final MDProxyList proxyList = (MDProxyList) value;
+			return Value.newBuilder().setProxyList(proxyList.proxyList).build();
 		}
 
 		throw new UnsupportedOperationException(String.format("Cannot encode values of type %s", value.getClass().getName()));

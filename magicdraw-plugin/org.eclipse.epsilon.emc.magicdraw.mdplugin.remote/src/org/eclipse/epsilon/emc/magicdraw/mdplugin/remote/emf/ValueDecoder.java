@@ -18,6 +18,7 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
 
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.foundation.MDObject;
 
 /**
  *  Decodes {@link Value} objects coming from the API into raw values that can be used
@@ -49,6 +50,12 @@ public class ValueDecoder {
 		case BYTEVALUE: return (byte) value.getByteValue();
 
 		// TODO lists (both literal and proxies)
+
+		case PROXYLIST: {
+			MDObject element = (MDObject) project.getElementByID(value.getProxyList().getElementID());
+			EStructuralFeature eFeature = element.eClass().getEStructuralFeature(value.getProxyList().getFeatureName());
+			return element.eGet(eFeature);
+		}
 
 		case VALUE_NOT_SET:
 		case NOTDEFINED: return null;

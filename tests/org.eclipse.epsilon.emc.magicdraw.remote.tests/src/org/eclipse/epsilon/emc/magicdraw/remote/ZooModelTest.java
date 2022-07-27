@@ -314,8 +314,8 @@ public class ZooModelTest {
 		module.parse("var lion = Class.all.selectOne(c|c.name='Lion'); "
 				+ "var g = new Generalization; "
 				+ "lion.generalization.set(0, g); "
-				+ "g.source = lion; "
-				+ "g.target = Class.all.selectOne(c|c.name = 'Elephant'); "
+				+ "g.source.add(lion); "
+				+ "g.target.add(Class.all.selectOne(c|c.name = 'Elephant')); "
 		);
 		module.execute();
 
@@ -391,6 +391,21 @@ public class ZooModelTest {
 
 		module.parse("return Class.all.selectOne(c|c.name='Animal').ownedAttribute.isEmpty();");
 		assertTrue("Clearing the list of attributes should result in an empty list", (boolean) module.execute());
+	}
+
+	@Test
+	public void assignProxyListToProxyList() throws Exception {
+		EolModule module = createEOLModule();
+		module.parse("var animal = Class.all.selectOne(c|c.name='Animal'); return animal.ownedAttribute.size();");
+		final int originalAttributeCount = (int) module.execute();
+
+		module.parse("var animal = Class.all.selectOne(c|c.name='Animal'); var lion = Class.all.selectOne(c|c.name='Lion'); lion.ownedAttribute = animal.ownedAttribute;");
+		module.execute();
+
+		module.parse("return Class.all.selectOne(c|c.name='Animal').ownedAttribute.isEmpty();");
+		assertTrue("Setting the attributes of Lion to those of Animal should leave Animal with no attributes", (boolean) module.execute());
+		module.parse("return Class.all.selectOne(c|c.name='Lion').ownedAttribute.size();");
+		assertEquals("Setting the attributes of Animal to those of Lion should leave Lion with all the original attributes of Animal", originalAttributeCount, (int) module.execute());
 	}
 
 	private EolModule createEOLModule() {

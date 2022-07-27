@@ -356,6 +356,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		)));
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void setFeatureValue(SetFeatureValueRequest request, StreamObserver<Empty> responseObserver) {
 		sendResponse(responseObserver, inProject()
@@ -372,7 +373,24 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 							request.getNewValue().getValueCase().name()))
 						.asRuntimeException());
 				}
-				mdObject.eSet(eFeature, decoded);
+
+				if (eFeature.isMany()) {
+					// This mimics the EmfPropertySetter in the EMC EMF driver
+					if (decoded instanceof Collection) {
+						Collection<Object> targetCol = (Collection<Object>) mdObject.eGet(eFeature);
+						Collection<Object> sourceCol = (Collection<Object>) decoded;
+						targetCol.clear();
+						targetCol.addAll(sourceCol);
+					} else {
+						return Either.left(Status.INVALID_ARGUMENT
+							.withDescription(String.format(
+								"Cannot assign a non-Collection to the many-valued %s feature in %s",
+								eFeature.getName(), getFullyQualifiedName(mdObject.eClass())))
+							.asRuntimeException());
+					}
+				} else {
+					mdObject.eSet(eFeature, decoded);
+				}
 				return Either.right(Empty.newBuilder().build());
 			})
 		))));

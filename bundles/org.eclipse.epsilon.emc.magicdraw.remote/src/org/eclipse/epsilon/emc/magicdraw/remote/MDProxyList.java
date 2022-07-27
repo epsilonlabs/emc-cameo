@@ -23,8 +23,8 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
  */
 public class MDProxyList extends AbstractList<Object> {
 
+	protected final ProxyList proxyList;
 	private final MagicDrawModel model;
-	private final ProxyList proxyList;
 
 	public MDProxyList(MagicDrawModel model, ProxyList proxyList) {
 		this.model = model;
