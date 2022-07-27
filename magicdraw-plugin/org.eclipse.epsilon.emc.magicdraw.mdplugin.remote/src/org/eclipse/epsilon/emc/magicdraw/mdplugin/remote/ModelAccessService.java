@@ -39,7 +39,7 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.GetElementByIDRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetFeatureValueRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetTypeRequest;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.ListGetRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ListPosition;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ListPositionValue;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementCollection;
@@ -385,7 +385,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	}
 
 	@Override
-	public void listGet(ListGetRequest request, StreamObserver<Value> responseObserver) {
+	public void listGet(ListPosition request, StreamObserver<Value> responseObserver) {
 		sendResponse(responseObserver,
 				inProject()
 				.flatMapRight((project) -> getElementByID(project, request.getList().getElementID())
@@ -441,6 +441,27 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 					}
 				}))
 			)));
+	}
+
+	@Override
+	public void listRemove(ListPosition request, StreamObserver<Value> responseObserver) {
+		sendResponse(responseObserver, inProject()
+			.flatMapRight((project) -> getElementByID(project, request.getList().getElementID())
+			.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getList().getFeatureName())
+			.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
+			.flatMapRight((eList) -> {
+				try {
+					Object oldValue = eList.remove(request.getPosition());
+					Value.Builder vb = Value.newBuilder();
+					encoder.encode(mdObject, eFeature, vb, oldValue);
+					return Either.right(vb.build());
+				} catch (UnsupportedOperationException ex) {
+					return Either.left(Status.INVALID_ARGUMENT
+						.withDescription(String.format("Feature %s in %s is not a modifiable list: it may be a derived feature", eFeature.getName(), getFullyQualifiedName(mdObject.eClass())))
+						.asRuntimeException());
+				}
+			}))
+		)));
 	}
 
 	private Either<StatusRuntimeException, EList<Object>> getEListForProxyList(ProxyList request) {

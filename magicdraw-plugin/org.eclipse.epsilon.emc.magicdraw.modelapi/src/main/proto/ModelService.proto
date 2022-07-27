@@ -161,7 +161,7 @@ message SetFeatureValueRequest {
     Value newValue = 3;
 }
 
-message ListGetRequest {
+message ListPosition {
     ProxyList list = 1;
     uint32 position = 2;
 }
@@ -197,7 +197,8 @@ service ModelService {
 
     // proxy list API
     rpc listSize(ProxyList) returns (SingleInteger);
-    rpc listGet(ListGetRequest) returns (Value);
+    rpc listGet(ListPosition) returns (Value);
     rpc listSet(ListPositionValue) returns (Value);
     rpc listAdd(ListPositionValue) returns (Empty);
+    rpc listRemove(ListPosition) returns (Value);
 }

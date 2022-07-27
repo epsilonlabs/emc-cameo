@@ -340,6 +340,28 @@ public class ZooModelTest {
 		assertEquals("'maneColour' should be the new first property of Lion", "maneColour", module.execute());
 	}
 
+	@Test
+	public void removeListElement() throws Exception {
+		EolModule module = createEOLModule();
+		module.parse("return Class.all.selectOne(c|c.name='Animal').ownedAttribute.size();");
+		final int originalAttributeCount = (int) module.execute();
+		module.parse("return Class.all.selectOne(c|c.name='Animal').ownedAttribute.first.name;");
+		final String firstAttributeName = (String) module.execute();
+		module.parse("return Class.all.selectOne(c|c.name='Animal').ownedAttribute.second.name;");
+		final String secondAttributeName = (String) module.execute();
+
+		module.parse("var removed = Class.all.selectOne(c|c.name='Animal').ownedAttribute.removeAt(0); return removed.name;");
+		assertEquals("It should be possible to access the name of the removed attribute: it has been removed from the list but not deleted from the model",
+			firstAttributeName, module.execute());
+
+		module.parse("return Class.all.selectOne(c|c.name='Animal').ownedAttribute.size();");
+		assertEquals("The number of attributes should have been reduced",
+			originalAttributeCount - 1, module.execute());
+		module.parse("return Class.all.selectOne(c|c.name='Animal').ownedAttribute.first.name;");
+		assertEquals("The second attribute should now be the first one",
+			secondAttributeName, module.execute());
+	}
+
 	private EolModule createEOLModule() {
 		EolModule module = new EolModule();
 		module.getContext().getModelRepository().addModel(m);
