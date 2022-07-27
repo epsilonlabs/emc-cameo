@@ -10,13 +10,9 @@
  *******************************************************************************/
 package org.eclipse.epsilon.emc.magicdraw.remote;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.eclipse.epsilon.emc.magicdraw.modelapi.EnumerationValue;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetFeatureValueRequest;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.Value.ValueCase;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.execute.context.IEolContext;
 import org.eclipse.epsilon.eol.execute.introspection.java.JavaPropertyGetter;
@@ -38,60 +34,48 @@ public class MagicDrawPropertyGetter extends JavaPropertyGetter {
 				.setFeatureName(property)
 				.build();
 
-			// TODO many-valued lists should use proxy lists that allow for modification
-
 			Value response = model.getClient().getFeatureValue(request);
-			switch (response.getValueCase()) {
-			case BOOLEANVALUE: return response.getBooleanValue();
-			case BOOLEANVALUES: return response.getBooleanValues().getValuesList();
-			case FLOATVALUE: return response.getFloatValue();
-			case FLOATVALUES: return response.getFloatValues().getValuesList();
-			case DOUBLEVALUE: return response.getDoubleValue();
-			case DOUBLEVALUES: return response.getDoubleValues().getValuesList();
-			case LONGVALUE: return response.getLongValue();
-			case LONGVALUES: return response.getLongValues();
-			case INTEGERVALUE: return response.getIntegerValue();
-			case INTEGERVALUES: return response.getIntegerValues().getValuesList();
-			case SHORTVALUE: return (short) response.getShortValue();
-			case SHORTVALUES: {
-				List<Short> elems = new ArrayList<>(response.getShortValues().getValuesCount());
-				for (Integer e : response.getShortValues().getValuesList()) {
-					elems.add(e.shortValue());
-				}
-				return elems;
-			}
-			case BYTEVALUE: return (byte) response.getByteValue();
-			case BYTEVALUES: {
-				List<Byte> elems = new ArrayList<>(response.getShortValues().getValuesCount());
-				for (Integer e : response.getShortValues().getValuesList()) {
-					elems.add(e.byteValue());
-				}
-				return elems;
-			}
-			case STRINGVALUE: return response.getStringValue();
-			case STRINGVALUES: return response.getStringValues();
-			case REFERENCEVALUE: return new MDModelElement(model, response.getReferenceValue());
-			case REFERENCEVALUES: {
-				List<MDModelElement> elems = new ArrayList<>(response.getReferenceValues().getValuesCount());
-				for (ModelElement e : response.getReferenceValues().getValuesList()) {
-					elems.add(new MDModelElement(model, e));
-				}
-				return elems;
-			}
-			case ENUMERATIONVALUE: return new MDEnumerationLiteral(response.getEnumerationValue());
-			case ENUMERATIONVALUES: {
-				List<MDEnumerationLiteral> elems = new ArrayList<>(response.getEnumerationValues().getValuesCount());
-				for (EnumerationValue e : response.getEnumerationValues().getValuesList()) {
-					elems.add(new MDEnumerationLiteral(e));
-				}
-				return elems;
-			}
-			case NOTDEFINED: /* just let it trickle to the Java property getter */ break;
-			case VALUE_NOT_SET: return null; 
+			if (response.getValueCase() != ValueCase.NOTDEFINED) {
+				return decodeValue(response);
 			}
 		}
 
 		return super.invoke(object, property, context);
+	}
+
+	protected Object decodeValue(Value response) {
+		switch (response.getValueCase()) {
+		case BOOLEANVALUE: return response.getBooleanValue();
+		case FLOATVALUE: return response.getFloatValue();
+		case DOUBLEVALUE: return response.getDoubleValue();
+		case LONGVALUE: return response.getLongValue();
+		case INTEGERVALUE: return response.getIntegerValue();
+		case SHORTVALUE: return (short) response.getShortValue();
+		case BYTEVALUE: return (byte) response.getByteValue();
+		case STRINGVALUE: return response.getStringValue();
+		case REFERENCEVALUE: return new MDModelElement(model, response.getReferenceValue());
+		case ENUMERATIONVALUE: return new MDEnumerationLiteral(response.getEnumerationValue());
+
+		case BOOLEANVALUES:
+		case DOUBLEVALUES:
+		case FLOATVALUES:
+		case LONGVALUES:
+		case INTEGERVALUES:
+		case SHORTVALUES:
+		case BYTEVALUES:
+		case STRINGVALUES:
+		case REFERENCEVALUES:
+		case ENUMERATIONVALUES:
+			throw new IllegalArgumentException("Server should only send proxy lists for many-valued features");
+
+		case PROXYLIST: return new MDProxyList(model, response.getProxyList());
+
+		case NOTDEFINED:
+			throw new IllegalArgumentException("Value is for an undefined feature");
+
+		case VALUE_NOT_SET:
+		default: return null;
+		}
 	}
 
 }

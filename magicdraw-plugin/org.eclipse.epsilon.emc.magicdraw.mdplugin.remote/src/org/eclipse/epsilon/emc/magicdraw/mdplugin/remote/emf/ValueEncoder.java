@@ -12,8 +12,6 @@ package org.eclipse.epsilon.emc.magicdraw.mdplugin.remote.emf;
 
 import static org.eclipse.epsilon.emc.magicdraw.mdplugin.remote.emf.ModelUtils.getFullyQualifiedName;
 
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.function.Predicate;
 
 import org.eclipse.emf.common.util.Enumerator;
@@ -21,19 +19,11 @@ import org.eclipse.emf.common.util.TreeIterator;
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.BooleanCollection;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.DoubleCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.EnumerationValue;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.EnumerationValueCollection;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.FloatCollection;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.IntegerCollection;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.LongCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementCollection;
-import org.eclipse.epsilon.emc.magicdraw.modelapi.StringCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
 
 import com.nomagic.magicdraw.foundation.MDObject;
@@ -43,11 +33,13 @@ import com.nomagic.magicdraw.foundation.MDObject;
  */
 public class ValueEncoder {
 
-	public void encode(final EStructuralFeature eFeature, Value.Builder vBuilder, final Object rawValue) {
+	public void encode(final MDObject mdObject, final EStructuralFeature eFeature, Value.Builder vBuilder, final Object rawValue) {
+		assert !eFeature.isMany() : "ValueEncoder should only be used for single-valued features";
+
 		if (eFeature instanceof EAttribute) {
-			encodeAttribute((EAttribute) eFeature, vBuilder, rawValue);
+			encodeScalarAttribute(vBuilder, rawValue);
 		} else {
-			encodeReference((EReference) eFeature, vBuilder, rawValue);
+			encodeReference(vBuilder, rawValue);
 		}
 	}
 
@@ -57,14 +49,6 @@ public class ValueEncoder {
 			.setLiteral(literal.getLiteral())
 			.setName(literal.getName())
 			.build();
-	}
-
-	private void encodeAttribute(final EAttribute eFeature, Value.Builder vBuilder, final Object rawValue) {
-		if (eFeature.isMany()) {
-			encodeManyScalarsAttribute(vBuilder, rawValue);
-		} else {
-			encodeScalarAttribute(vBuilder, rawValue);
-		}
 	}
 
 	private void encodeScalarAttribute(Value.Builder vBuilder, final Object rawValue) {
@@ -91,73 +75,8 @@ public class ValueEncoder {
 		}
 	}
 
-	private void encodeManyScalarsAttribute(Value.Builder vBuilder, final Object rawValue) {
-		final Iterator<?> it = ((Collection<?>) rawValue).iterator();
-		final Object firstValue = it.next();
-		if (firstValue instanceof Number) {
-			if (firstValue instanceof Float) {
-				FloatCollection.Builder builder = FloatCollection.newBuilder();
-				builder.addValues((float) firstValue);
-				while (it.hasNext())
-					builder.addValues((float) it.next());
-				vBuilder.setFloatValues(builder);
-			} else if (firstValue instanceof Double) {
-				DoubleCollection.Builder builder = DoubleCollection.newBuilder();
-				builder.addValues((double) firstValue);
-				while (it.hasNext())
-					builder.addValues((double) it.next());
-				vBuilder.setDoubleValues(builder);
-			} else if (firstValue instanceof Long) {
-				LongCollection.Builder builder = LongCollection.newBuilder();
-				builder.addValues((long) firstValue);
-				while (it.hasNext())
-					builder.addValues((long) it.next());
-				vBuilder.setLongValues(builder);
-			} else {
-				IntegerCollection.Builder builder = IntegerCollection.newBuilder();
-				builder.addValues((int) firstValue);
-				while (it.hasNext())
-					builder.addValues((int) it.next());
-				if (firstValue instanceof Integer) {
-					vBuilder.setIntegerValues(builder);
-				} else if (firstValue instanceof Short) {
-					vBuilder.setShortValues(builder);
-				} else {
-					vBuilder.setByteValues(builder);
-				}
-			}
-		} else if (firstValue instanceof String) {
-			StringCollection.Builder iBuilder = StringCollection.newBuilder();
-			iBuilder.addValues((String) firstValue);
-			while (it.hasNext())
-				iBuilder.addValues((String) it.next());
-			vBuilder.setStringValues(iBuilder.build());
-		} else if (firstValue instanceof Boolean) {
-			BooleanCollection.Builder iBuilder = BooleanCollection.newBuilder();
-			iBuilder.addValues((boolean) firstValue);
-			while (it.hasNext())
-				iBuilder.addValues((boolean) it.next());
-			vBuilder.setBooleanValues(iBuilder.build());
-		} else if (firstValue instanceof Enumerator) {
-			EnumerationValueCollection.Builder evBuilder = EnumerationValueCollection.newBuilder();
-			evBuilder.addValues(encode((Enumerator) firstValue));
-			while (it.hasNext())
-				evBuilder.addValues(encode((Enumerator) it.next()));
-			vBuilder.setEnumerationValues(evBuilder.build());
-		}
-	}
-
-	@SuppressWarnings("unchecked")
-	private void encodeReference(EReference eReference, Value.Builder vBuilder, final Object rawValue) {
-		if (eReference.isMany()) {
-			ModelElementCollection.Builder cBuilder = ModelElementCollection.newBuilder();
-			for (Iterator<MDObject> it = ((Iterable<MDObject>) rawValue).iterator(); it.hasNext();) {
-				cBuilder.addValues(encode(it.next()));
-			}
-			vBuilder.setReferenceValues(cBuilder.build());
-		} else {
-			vBuilder.setReferenceValue(encode((MDObject) rawValue));
-		}
+	private void encodeReference(Value.Builder vBuilder, final Object rawValue) {
+		vBuilder.setReferenceValue(encode((MDObject) rawValue));
 	}
 
 	public ModelElement encode(MDObject eob) {
@@ -168,6 +87,7 @@ public class ValueEncoder {
 	}
 
 	public ModelElementCollection encodeAllOf(EClassifier eClassifier, EObject root, final boolean onlyExactType) {
+		// TODO Should we use a proxy list for Type.all as well?
 		final ModelElementCollection.Builder builder = ModelElementCollection.newBuilder();
 		final TreeIterator<EObject> it = EcoreUtil.getAllProperContents(root, true);
 

@@ -19,6 +19,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.eclipse.emf.common.util.EList;
+import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EEnum;
@@ -37,6 +39,7 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.GetElementByIDRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetEnumerationValueRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetFeatureValueRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetTypeRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ListGetRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementCollection;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementType;
@@ -44,7 +47,9 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementTypeReference;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceConstants;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceGrpc;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.OpenSessionRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ProxyList;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.SetFeatureValueRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.SingleInteger;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +64,6 @@ import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.magicdraw.uml.Finder;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.VisibilityKind;
 import com.nomagic.uml2.impl.ElementsFactory;
 
 import io.grpc.Metadata;
@@ -147,9 +151,13 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 					.getEStructuralFeature(request.getFeatureName());
 				if (eFeature == null) {
 					vBuilder.setNotDefined(true);
+				} else if (eFeature.isMany()) {
+					vBuilder.setProxyList(ProxyList.newBuilder()
+							.setElementID(mdObject.getID())
+							.setFeatureName(eFeature.getName()));
 				} else {
 					Object rawValue = mdObject.eGet(eFeature);
-					if (rawValue == null) {
+					if (rawValue == null && eFeature instanceof EAttribute) {
 						/*
 						 * MagicDraw does not use default values consistently in their feature
 						 * declarations: for instance, a class with a public visibility will have
@@ -158,8 +166,12 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 						 * always works, though, but it is much slower.
 						 *
 						 * Normally we would check if the eType of the feature is an EEnum and
-						 * use the first literal as the default value [1], but it appears that the
-						 * visibility is a custom EDataTypeImpl class with no clear link to an EEnum.
+						 * use the first literal as the default value [1], but it appears that
+						 * NamedElementVisibilityKind is a custom EDataTypeImpl class with no
+						 * clear link to an EEnum.
+						 *
+						 * We only do this for EAttributes as it only seems to be an issue
+						 * right now for those enumeration-based properties.
 						 *
 						 * [1]: https://www.eclipse.org/forums/index.php?t=msg&th=168434/
 						 */
@@ -175,7 +187,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 					}
 
 					if (rawValue != null) {
-						encoder.encode(eFeature, vBuilder, rawValue);
+						encoder.encode(mdObject, eFeature, vBuilder, rawValue);
 					}
 				}
 				return Either.right(vBuilder.build());
@@ -262,9 +274,10 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 
 	@Override
 	public void createInstance(CreateInstanceRequest request, StreamObserver<ModelElement> responseObserver) {
-		sendResponse(responseObserver, inProject().flatMapRight((project) ->
-			inSession(project).flatMapRight((sessionManager) ->
-				findEClassifier(request.getTypeName()).flatMapRight((eClassifier) -> {
+		sendResponse(responseObserver, inProject()
+			.flatMapRight((project) -> inSession(project)
+			.flatMapRight((sessionManager) -> findEClassifier(request.getTypeName())
+			.flatMapRight((eClassifier) -> {
 					if (!(eClassifier instanceof EClass)) {
 						return Either.left(exTypeNotInstantiable(String.format("%s is not an EClassifier", getFullyQualifiedName(eClassifier))));
 					}
@@ -298,8 +311,9 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 
 	@Override
 	public void openSession(OpenSessionRequest request, StreamObserver<Empty> responseObserver) {
-		sendResponse(responseObserver, inProject().flatMapRight((project) ->
-			notInSession(project).flatMapRight((sm) -> {
+		sendResponse(responseObserver, inProject()
+			.flatMapRight((project) -> notInSession(project)
+			.flatMapRight((sm) -> {
 				sm.createSession(project, request.getDescription());
 				return Either.right(Empty.newBuilder().build());
 			})
@@ -318,56 +332,100 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 
 	@Override
 	public void deleteInstance(DeleteInstanceRequest request, StreamObserver<Empty> responseObserver) {
-		sendResponse(responseObserver, inProject().flatMapRight(
-			(project) -> inSession(project).flatMapRight((sessionManager) -> {
-				return getElementByID(project, request.getElementID()).flatMapRight((mdObject) -> {
-					if (mdObject instanceof Element) {
-						try {
-							ModelElementsManager.getInstance().removeElement((Element) mdObject);
-							return Either.right(Empty.newBuilder().build());
-						} catch (ReadOnlyElementException e) {
-							return Either.left(Status.INVALID_ARGUMENT
-								.withDescription(String.format("Object with ID %s is read only", request.getElementID()))
-								.asRuntimeException());
-						}
-					} else {
+		sendResponse(responseObserver, inProject()
+			.flatMapRight((project) -> inSession(project)
+			.flatMapRight((sessionManager) -> getElementByID(project, request.getElementID())
+			.flatMapRight((mdObject) -> {
+				if (mdObject instanceof Element) {
+					try {
+						ModelElementsManager.getInstance().removeElement((Element) mdObject);
+						return Either.right(Empty.newBuilder().build());
+					} catch (ReadOnlyElementException e) {
 						return Either.left(Status.INVALID_ARGUMENT
-							.withDescription(String.format("Object with ID %s is not an Element", request.getElementID()))
+							.withDescription(String.format("Object with ID %s is read only", request.getElementID()))
 							.asRuntimeException());
 					}
-				});
-		})));
+				} else {
+					return Either.left(Status.INVALID_ARGUMENT
+						.withDescription(String.format("Object with ID %s is not an Element", request.getElementID()))
+						.asRuntimeException());
+				}
+			})
+		)));
 	}
 
 	@Override
 	public void setFeatureValue(SetFeatureValueRequest request, StreamObserver<Empty> responseObserver) {
-		sendResponse(responseObserver, inProject().flatMapRight(
-			(project) -> inSession(project).flatMapRight((sessionManager) -> {
-				return getElementByID(project, request.getElementID()).flatMapRight((mdObject) -> {
-					final EStructuralFeature eFeature = mdObject.eClass()
-						.getEStructuralFeature(request.getFeatureName());
-					if (eFeature == null) {
-						return Either.left(Status.INVALID_ARGUMENT
-							.withDescription(String.format("Feature %s does not exist in type %s",
-								request.getFeatureName(), getFullyQualifiedName(mdObject.eClass())))
-							.asRuntimeException());
-					}
-
-					Object decoded;
-					try {
-						decoded = decoder.decode(project, eFeature, request.getNewValue());
-					} catch (IllegalArgumentException ex) {
-						return Either.left(Status.INVALID_ARGUMENT
-							.withDescription(String.format("Could not decode value kind %s",
-								request.getNewValue().getValueCase().name()))
-							.asRuntimeException());
-					}
-
-					mdObject.eSet(eFeature, decoded);
-					return Either.right(Empty.newBuilder().build());
-				});
+		sendResponse(responseObserver, inProject()
+			.flatMapRight((project) -> inSession(project)
+			.flatMapRight((sessionManager) -> getElementByID(project, request.getElementID())
+			.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getFeatureName())
+			.flatMapRight((eFeature) -> {
+				Object decoded;
+				try {
+					decoded = decoder.decode(project, eFeature, request.getNewValue());
+				} catch (IllegalArgumentException ex) {
+					return Either.left(Status.INVALID_ARGUMENT
+						.withDescription(String.format("Could not decode value kind %s",
+							request.getNewValue().getValueCase().name()))
+						.asRuntimeException());
+				}
+				mdObject.eSet(eFeature, decoded);
+				return Either.right(Empty.newBuilder().build());
 			})
-		));
+		))));
+	}
+
+	@Override
+	public void listSize(ProxyList request, StreamObserver<SingleInteger> responseObserver) {
+		sendResponse(responseObserver, getEListForProxyList(request)
+			.flatMapRight((eList) -> Either.right(SingleInteger.newBuilder().setValue(eList.size()).build())));
+	}
+
+	@Override
+	public void listGet(ListGetRequest request, StreamObserver<Value> responseObserver) {
+		sendResponse(responseObserver,
+				inProject()
+				.flatMapRight((project) -> getElementByID(project, request.getList().getElementID())
+				.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getList().getFeatureName())
+				.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
+				.flatMapRight((eList) -> {
+					Value.Builder vb = Value.newBuilder();
+					encoder.encode(mdObject, eFeature, vb, eList.get(request.getPosition()));
+					return Either.right(vb.build());
+				}))
+			)));
+	}
+
+	private Either<StatusRuntimeException, EList<Object>> getEListForProxyList(ProxyList request) {
+		return inProject()
+			.flatMapRight((project) -> getElementByID(project, request.getElementID())
+			.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getFeatureName())
+			.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
+		)));
+	}
+
+	@SuppressWarnings("unchecked")
+	private Either<StatusRuntimeException, EList<Object>> getEList(MDObject mdObject, EStructuralFeature eFeature) {
+		if (!eFeature.isMany()) {
+			return Either.left(Status.INVALID_ARGUMENT
+				.withDescription(String.format("Feature %s in %s is not many-valued", eFeature.getName(), getFullyQualifiedName(mdObject.eClass())))
+				.asRuntimeException());
+		} else {
+			return Either.right((EList<Object>) mdObject.eGet(eFeature));
+		}
+	}
+
+	private Either<StatusRuntimeException, EStructuralFeature> getEFeature(EClass eClassifier, String featureName) {
+		final EStructuralFeature eFeature = eClassifier.getEStructuralFeature(featureName);
+		if (eFeature == null) {
+			return Either.left(Status.INVALID_ARGUMENT
+				.withDescription(String.format("Feature %s does not exist in type %s",
+					featureName, getFullyQualifiedName(eClassifier)))
+				.asRuntimeException());
+		} else {
+			return Either.right(eFeature);
+		}
 	}
 
 	private Either<StatusRuntimeException, EClassifier> findEClassifier(String typeName) {

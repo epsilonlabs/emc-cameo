@@ -35,6 +35,10 @@ message DoubleCollection {
     repeated double values = 1;
 }
 
+message SingleInteger {
+    sint32 value = 1;
+}
+
 message IntegerCollection {
     repeated sint32 values = 1;
 }
@@ -61,6 +65,11 @@ message EnumerationValueCollection {
     repeated EnumerationValue values = 1;
 }
 
+message ProxyList {
+    string elementID = 1;
+    string featureName = 2;
+}
+
 message Value {
     oneof value {
         string stringValue = 1;
@@ -74,6 +83,10 @@ message Value {
         ModelElement referenceValue = 9;
         EnumerationValue enumerationValue = 10;
 
+        /*
+         * These should only be used by a client to send values:
+         * the server should only serve proxy lists.
+         */
         StringCollection stringValues = 11;
         FloatCollection floatValues = 12;
         DoubleCollection doubleValues = 13;
@@ -85,6 +98,14 @@ message Value {
         ModelElementCollection referenceValues = 19;
         EnumerationValueCollection enumerationValues = 20;
 
+        // The server will always send proxy lists for many-valued features
+        ProxyList proxyList = 22;
+
+        /*
+         * There is no such feature defined for the given object:
+         * this is different from the feature not being set (in which
+         * case, we would send a Value with value left unset).
+         */
         bool notDefined = 21;
     }
 }
@@ -140,6 +161,11 @@ message SetFeatureValueRequest {
     Value newValue = 3;
 }
 
+message ListGetRequest {
+    ProxyList list = 1;
+    uint32 position = 2;
+}
+
 // Main service
 
 service ModelService {
@@ -162,4 +188,8 @@ service ModelService {
     rpc createInstance(CreateInstanceRequest) returns (ModelElement);
     rpc deleteInstance(DeleteInstanceRequest) returns (Empty);
     rpc setFeatureValue(SetFeatureValueRequest) returns (Empty);
+
+    // proxy list API
+    rpc listSize(ProxyList) returns (SingleInteger);
+    rpc listGet(ListGetRequest) returns (Value);
 }

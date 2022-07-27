@@ -39,6 +39,7 @@ import org.eclipse.epsilon.eol.exceptions.models.EolEnumerationValueNotFoundExce
 import org.eclipse.epsilon.eol.exceptions.models.EolModelElementTypeNotFoundException;
 import org.eclipse.epsilon.eol.exceptions.models.EolModelLoadingException;
 import org.eclipse.epsilon.eol.exceptions.models.EolNotInstantiableModelElementTypeException;
+import org.eclipse.epsilon.eol.execute.introspection.IPropertySetter;
 import org.eclipse.epsilon.eol.models.CachedModel;
 import org.eclipse.epsilon.eol.models.IRelativePathResolver;
 import org.slf4j.Logger;
@@ -122,6 +123,16 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	public MagicDrawModel() {
 		propertyGetter = new MagicDrawPropertyGetter(this);
 		propertySetter = new MagicDrawPropertySetter(this);
+	}
+
+	@Override
+	public MagicDrawPropertyGetter getPropertyGetter() {
+		return (MagicDrawPropertyGetter) propertyGetter;
+	}
+
+	@Override
+	public IPropertySetter getPropertySetter() {
+		return (MagicDrawPropertySetter) propertySetter;
 	}
 
 	protected ModelServiceBlockingStub getClient() {

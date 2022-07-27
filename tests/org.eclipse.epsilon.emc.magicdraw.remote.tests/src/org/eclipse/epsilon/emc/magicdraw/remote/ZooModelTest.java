@@ -66,8 +66,7 @@ public class ZooModelTest {
 
 	@Test
 	public void classNames() throws Exception {
-		EolModule module = new EolModule();
-		module.getContext().getModelRepository().addModel(m);
+		EolModule module = createEOLModule();
 		module.parse("return Class.all.collect(c | c.name + ' is a ' + c.typeName + ' from ' + c.metamodelUri).sortBy(s|s).first;");
 		String firstClass = (String) module.execute();
 		assertEquals("Animal is a uml::Class from http://www.nomagic.com/magicdraw/UML/2.5.1.1", firstClass);
@@ -92,8 +91,7 @@ public class ZooModelTest {
 
 	@Test
 	public void enumLiteralFoundEOL() throws Exception {
-		EolModule module = new EolModule();
-		module.getContext().getModelRepository().addModel(m);
+		EolModule module = createEOLModule();
 		module.parse("return uml::VisibilityKind#private;");
 		MDEnumerationLiteral literal = (MDEnumerationLiteral) m.getEnumerationValue("uml::VisibilityKind", "private");
 		assertNotNull(literal);
@@ -106,8 +104,7 @@ public class ZooModelTest {
 
 	@Test
 	public void enumLiteralGet() throws Exception {
-		EolModule module = new EolModule();
-		module.getContext().getModelRepository().addModel(m);
+		EolModule module = createEOLModule();
 		module.parse("return Class.all.selectOne(c|c.name='Animal').visibility;");
 
 		final Object rawResponse = module.execute();
@@ -186,8 +183,7 @@ public class ZooModelTest {
 
 	@Test
 	public void setStringAttribute() throws Exception {
-		EolModule module = new EolModule();
-		module.getContext().getModelRepository().addModel(m);
+		EolModule module = createEOLModule();
 		module.parse("Class.all.selectOne(c|c.name = 'Animal').name = 'AnimalChanged';");
 		module.execute();
 
@@ -198,8 +194,7 @@ public class ZooModelTest {
 
 	@Test
 	public void unsetStringAttribute() throws Exception {
-		EolModule module = new EolModule();
-		module.getContext().getModelRepository().addModel(m);
+		EolModule module = createEOLModule();
 		module.parse("Class.all.selectOne(c|c.name = 'Animal').name = null;");
 		module.execute();
 
@@ -209,8 +204,7 @@ public class ZooModelTest {
 
 	@Test
 	public void setBooleanAttribute() throws Exception {
-		EolModule module = new EolModule();
-		module.getContext().getModelRepository().addModel(m);
+		EolModule module = createEOLModule();
 
 		// Given the Animal class is intially passive...
 		module.parse("return Class.all.selectOne(c|c.name = 'Animal').isActive;");
@@ -227,8 +221,7 @@ public class ZooModelTest {
 
 	@Test
 	public void setEnumerationAttribute() throws Exception {
-		EolModule module = new EolModule();
-		module.getContext().getModelRepository().addModel(m);
+		EolModule module = createEOLModule();
 		module.parse("return Class.all.select(c|c.visibility = uml::VisibilityKind#private).size();");
 		assertEquals("At first, there should be no private classes", 0, module.execute());
 
@@ -241,8 +234,7 @@ public class ZooModelTest {
 
 	@Test
 	public void setSingleReference() throws Exception {
-		EolModule module = new EolModule();
-		module.getContext().getModelRepository().addModel(m);
+		EolModule module = createEOLModule();
 
 		// Given the original owning package of Lion was the main Model one
 		module.parse("return Class.all.selectOne(c|c.name = 'Lion').owningPackage.name;");
@@ -259,8 +251,7 @@ public class ZooModelTest {
 
 	@Test
 	public void setSingleInteger() throws Exception {
-		EolModule module = new EolModule();
-		module.getContext().getModelRepository().addModel(m);
+		EolModule module = createEOLModule();
 
 		module.parse("return LiteralInteger.all.first.value;");
 		assertEquals("At first, the default value of Animal::age should be 0", 0, module.execute());
@@ -275,8 +266,7 @@ public class ZooModelTest {
 
 	@Test
 	public void setSingleDouble() throws Exception {
-		EolModule module = new EolModule();
-		module.getContext().getModelRepository().addModel(m);
+		EolModule module = createEOLModule();
 
 		// Given the original owning package of Lion was the main Model one
 		module.parse("return LiteralReal.all.first.value;");
@@ -292,10 +282,32 @@ public class ZooModelTest {
 
 	@Test(expected=EolRuntimeException.class)
 	public void setMissingFields() throws Exception {
-		EolModule module = new EolModule();
-		module.getContext().getModelRepository().addModel(m);
+		EolModule module = createEOLModule();
 		module.parse("Class.all.selectOne(c|c.name = 'Animal').iDoNotExist = true;");
 		module.execute();
+	}
+
+	@Test
+	public void getListSize() throws Exception {
+		EolModule module = createEOLModule();
+		module.parse("return Class.all.selectOne(c|c.name = 'Lion').superClass.size();");
+		assertEquals("Lion should have one superclass", 1, module.execute());
+	}
+
+	@Test
+	public void getListFirst() throws Exception {
+		EolModule module = createEOLModule();
+		module.parse("return Class.all.selectOne(c|c.name = 'Lion').superClass.first.name;");
+		assertEquals("Lion should have one superclass named Animal", "Animal", module.execute());
+	}
+
+	/**
+	 * @return
+	 */
+	private EolModule createEOLModule() {
+		EolModule module = new EolModule();
+		module.getContext().getModelRepository().addModel(m);
+		return module;
 	}
 
 	private int classCount() throws EolModelElementTypeNotFoundException {
