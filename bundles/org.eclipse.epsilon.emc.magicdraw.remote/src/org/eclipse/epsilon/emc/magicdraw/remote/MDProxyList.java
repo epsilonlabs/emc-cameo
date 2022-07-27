@@ -49,25 +49,29 @@ public class MDProxyList extends AbstractList<Object> {
 	@Override
 	public Object set(int index, Object element) {
 		Value value = model.encoder.encode(element);
-		Value oldValue = model.client.listSet(ListPositionValue.newBuilder()
-			.setList(proxyList)
-			.setPosition(index)
-			.setValue(value)
-			.build());
+		Value oldValue = model.client.listSet(createListPositionValue(index, value));
 
 		return model.getPropertyGetter().decodeValue(oldValue);
 	}
 
 	@Override
 	public void add(int index, Object element) {
-		// TODO Auto-generated method stub
-		super.add(index, element);
+		Value value = model.encoder.encode(element);
+		model.client.listAdd(createListPositionValue(index, value));
 	}
 
 	@Override
 	public Object remove(int index) {
 		// TODO Auto-generated method stub
 		return super.remove(index);
+	}
+
+	private ListPositionValue createListPositionValue(int index, Value value) {
+		return ListPositionValue.newBuilder()
+			.setList(proxyList)
+			.setPosition(index)
+			.setValue(value)
+			.build();
 	}
 
 	/* EList-inspired operations */

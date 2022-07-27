@@ -199,4 +199,5 @@ service ModelService {
     rpc listSize(ProxyList) returns (SingleInteger);
     rpc listGet(ListGetRequest) returns (Value);
     rpc listSet(ListPositionValue) returns (Value);
+    rpc listAdd(ListPositionValue) returns (Empty);
 }

@@ -326,6 +326,20 @@ public class ZooModelTest {
 		assertEquals("Elephant should only have one superclass", 1, module.execute());
 	}
 
+	@Test
+	public void addListElement() throws Exception {
+		EolModule module = createEOLModule();
+		module.parse("var lion = Class.all.selectOne(c|c.name='Lion'); "
+				+ "var p = new Property; "
+				+ "p.name = 'maneColour'; "
+				+ "lion.ownedAttribute.add(0, p); "
+		);
+		module.execute();
+
+		module.parse("return Class.all.selectOne(c | c.name = 'Lion').ownedAttribute.first.name;");
+		assertEquals("'maneColour' should be the new first property of Lion", "maneColour", module.execute());
+	}
+
 	private EolModule createEOLModule() {
 		EolModule module = new EolModule();
 		module.getContext().getModelRepository().addModel(m);
