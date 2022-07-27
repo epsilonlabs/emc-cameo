@@ -386,63 +386,63 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 
 	@Override
 	public void listGet(ListPosition request, StreamObserver<Value> responseObserver) {
-		sendResponse(responseObserver,
-				inProject()
-				.flatMapRight((project) -> getElementByID(project, request.getList().getElementID())
-				.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getList().getFeatureName())
-				.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
-				.flatMapRight((eList) -> {
-					Value.Builder vb = Value.newBuilder();
-					encoder.encode(mdObject, eFeature, vb, eList.get(request.getPosition()));
-					return Either.right(vb.build());
-				}))
-			)));
+		sendResponse(responseObserver, inProject()
+			.flatMapRight((project) -> getElementByID(project, request.getList().getElementID())
+			.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getList().getFeatureName())
+			.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
+			.flatMapRight((eList) -> {
+				Value.Builder vb = Value.newBuilder();
+				encoder.encode(mdObject, eFeature, vb, eList.get(request.getPosition()));
+				return Either.right(vb.build());
+			}))
+		)));
 	}
 
 	@Override
 	public void listSet(ListPositionValue request, StreamObserver<Value> responseObserver) {
-		sendResponse(responseObserver,
-				inProject()
-				.flatMapRight((project) -> getElementByID(project, request.getList().getElementID())
-				.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getList().getFeatureName())
-				.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
-				.flatMapRight((eList) -> {
-					Object newValue = decoder.decode(project, eFeature, request.getValue());
-					try {
-						Object oldValue = eList.set(request.getPosition(), newValue);
-						Value.Builder vb = Value.newBuilder();
-						encoder.encode(mdObject, eFeature, vb, oldValue);
-						return Either.right(Value.newBuilder().build());
-					} catch (UnsupportedOperationException ex) {
-						return Either.left(exListNotModifiable(mdObject, eFeature));
-					}
-				}))
-			)));
+		sendResponse(responseObserver, inProject()
+			.flatMapRight((project) -> inSession(project)
+			.flatMapRight((sm) -> getElementByID(project, request.getList().getElementID())
+			.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getList().getFeatureName())
+			.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
+			.flatMapRight((eList) -> {
+				Object newValue = decoder.decode(project, eFeature, request.getValue());
+				try {
+					Object oldValue = eList.set(request.getPosition(), newValue);
+					Value.Builder vb = Value.newBuilder();
+					encoder.encode(mdObject, eFeature, vb, oldValue);
+					return Either.right(Value.newBuilder().build());
+				} catch (UnsupportedOperationException ex) {
+					return Either.left(exListNotModifiable(mdObject, eFeature));
+				}
+			})))
+		)));
 	}
 
 	@Override
 	public void listAdd(ListPositionValue request, StreamObserver<Empty> responseObserver) {
-		sendResponse(responseObserver,
-				inProject()
-				.flatMapRight((project) -> getElementByID(project, request.getList().getElementID())
-				.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getList().getFeatureName())
-				.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
-				.flatMapRight((eList) -> {
-					Object newValue = decoder.decode(project, eFeature, request.getValue());
-					try {
-						eList.add(request.getPosition(), newValue);
-						return Either.right(Empty.newBuilder().build());
-					} catch (UnsupportedOperationException ex) {
-						return Either.left(exListNotModifiable(mdObject, eFeature));
-					}
-				}))
-			)));
+		sendResponse(responseObserver, inProject()
+			.flatMapRight((project) -> inSession(project)
+			.flatMapRight((sm) -> getElementByID(project, request.getList().getElementID())
+			.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getList().getFeatureName())
+			.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
+			.flatMapRight((eList) -> {
+				Object newValue = decoder.decode(project, eFeature, request.getValue());
+				try {
+					eList.add(request.getPosition(), newValue);
+					return Either.right(Empty.newBuilder().build());
+				} catch (UnsupportedOperationException ex) {
+					return Either.left(exListNotModifiable(mdObject, eFeature));
+				}
+			})))
+		)));
 	}
 
 	@Override
 	public void listRemove(ListPosition request, StreamObserver<Value> responseObserver) {
 		sendResponse(responseObserver, inProject()
-			.flatMapRight((project) -> getElementByID(project, request.getList().getElementID())
+			.flatMapRight((project) -> inSession(project)
+			.flatMapRight((sm) -> getElementByID(project, request.getList().getElementID())
 			.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getList().getFeatureName())
 			.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
 			.flatMapRight((eList) -> {
@@ -454,14 +454,15 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 				} catch (UnsupportedOperationException ex) {
 					return Either.left(exListNotModifiable(mdObject, eFeature));
 				}
-			}))
+			})))
 		)));
 	}
 
 	@Override
 	public void listMoveObject(ListPositionValue request, StreamObserver<Empty> responseObserver) {
 		sendResponse(responseObserver, inProject()
-				.flatMapRight((project) -> getElementByID(project, request.getList().getElementID())
+				.flatMapRight((project) -> inSession(project)
+				.flatMapRight((sm) -> getElementByID(project, request.getList().getElementID())
 				.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getList().getFeatureName())
 				.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
 				.flatMapRight((eList) -> {
@@ -472,7 +473,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 					} catch (UnsupportedOperationException ex) {
 						return Either.left(exListNotModifiable(mdObject, eFeature));
 					}
-				}))
+				})))
 			)));
 	}
 

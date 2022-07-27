@@ -383,6 +383,16 @@ public class ZooModelTest {
 			firstAttributeName, module.execute());
 	}
 
+	@Test
+	public void clearList() throws Exception {
+		EolModule module = createEOLModule();
+		module.parse("var animal = Class.all.selectOne(c|c.name='Animal'); animal.ownedAttribute.clear();");
+		module.execute();
+
+		module.parse("return Class.all.selectOne(c|c.name='Animal').ownedAttribute.isEmpty();");
+		assertTrue("Clearing the list of attributes should result in an empty list", (boolean) module.execute());
+	}
+
 	private EolModule createEOLModule() {
 		EolModule module = new EolModule();
 		module.getContext().getModelRepository().addModel(m);
