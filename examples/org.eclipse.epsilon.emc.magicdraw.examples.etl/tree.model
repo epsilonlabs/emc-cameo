@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="ASCII"?>
+<Tree:Tree xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:Tree="Tree" xmi:id="_RYkycA6CEe20Y6E7R8HVOQ" label="Vehicle">
+  <children xmi:id="_UTiHsA6CEe20Y6E7R8HVOQ" label="Car"/>
+  <children xmi:id="_VQk-wA6CEe20Y6E7R8HVOQ" label="Bicycle"/>
+</Tree:Tree>

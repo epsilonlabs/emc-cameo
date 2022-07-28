@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="run-eclipse">
+
+	<!-- This takes advantage of the magicdraw.remote plugin defining 'MagicDrawRemote' as a model type -->
+	<target name="run-eclipse">
+        <epsilon.emf.loadModel name="Tree" metamodelfile="Tree.ecore" modelfile="tree.model"/>
+		<epsilon.loadModel type="MagicDrawRemote" name="MagicDraw">
+			<parameter name="storeOnDisposal" value="true"/>
+		</epsilon.loadModel>
+
+		<epsilon.etl src="tree2Classes.etl">
+			<model ref="Tree"/>
+			<model ref="MagicDraw"/>
+		</epsilon.etl>
+
+		<epsilon.disposeModel model="Tree"/>
+		<epsilon.disposeModel model="MagicDraw"/>
+    </target>
+
+	<!--
+	  This is for running outside of Eclipse, using the self-contained Ant distribution.
+	  The 'impl' attribute with the exact name of the class is needed.	  
+
+	  You will also need to ensure that Ant's classpath includes the lib/ folder of the
+	  unpackaged "-ant.zip" distribution of this driver, by invoking it as:
+	  
+	  ant -lib /path/to/antdist/lib run-standalone
+	 -->
+	<target name="run-standalone">
+        <taskdef resource="org/eclipse/epsilon/workflow/tasks/tasks.xml"/>
+        <taskdef resource="org/eclipse/epsilon/workflow/tasks/emf/tasks.xml"/>
+		
+        <epsilon.emf.loadModel name="Tree" metamodelfile="Tree.ecore" modelfile="tree.model"/>
+		<epsilon.loadModel type="MagicDrawRemote" name="MagicDraw" impl="org.eclipse.epsilon.emc.magicdraw.remote.MagicDrawModel">
+			<parameter name="storeOnDisposal" value="true"/>
+		</epsilon.loadModel>
+
+		<epsilon.etl src="tree2Classes.etl">
+			<model ref="Tree"/>
+			<model ref="MagicDraw"/>
+		</epsilon.etl>
+
+		<epsilon.disposeModel model="Tree"/>
+		<epsilon.disposeModel model="MagicDraw"/>
+    </target>
+	
+</project>

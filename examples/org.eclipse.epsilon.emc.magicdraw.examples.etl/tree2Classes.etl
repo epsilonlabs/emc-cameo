@@ -1,0 +1,12 @@
+rule Tree2Class
+  transform t: Tree!Tree
+  to c: MagicDraw!Class {
+
+  c.name = t.label;
+
+  if (t.parent.isDefined()) {
+    var g = new MagicDraw!Generalization;
+    g.source.add(c);
+    g.target.add(t.parent.equivalent());
+  }
+}
