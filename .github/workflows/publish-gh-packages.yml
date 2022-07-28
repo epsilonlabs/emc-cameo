@@ -1,9 +1,12 @@
 name: Publish to GitHub Packages
+
+# As we cannot automatically run tests with GH Actions due to a dependency on MagicDraw,
+# you will need to manually check that all tests pass and then create a release on Github,
+# which will trigger this workflow.
 on:
-  workflow_run:
-    workflows: ["Java CI with Maven"]
-    types:     ["completed"]
-    branches:  [ "main" ]
+  release:
+    types: [created]
+
 jobs:
   publish:
     runs-on: ubuntu-latest 
