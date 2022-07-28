@@ -95,6 +95,9 @@ This build is for redistributing the EMC driver via Maven / plain JARs (e.g. for
 
 Specifically, this plain Maven build does not run the `create-magicdraw-plugin.sh` script, which is needed when developing the EMC driver as an Eclipse plugin.
 
+Note that you will still need a running MagicDraw instance with the appropriate model open to pass the tests.
+Please check the `ZooModelTest` test class for details.
+
 ## Other resources
 
 * [Blog post on using Xtend from a Cameo/MagicDraw plugin](https://blogs.itemis.com/en/model-transformations-for-mbse-with-cameo-and-xtend)
