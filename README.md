@@ -83,6 +83,18 @@ While developing, it is best to run MagicDraw in verbose mode from a console, to
 ./magicdraw -verbose
 ```
 
+## Plain Maven build
+
+You can also run a plain Maven build using the parallel hierarchy of `pom-plain.xml` files:
+
+```shell
+mvn -f pom-plain.xml clean install
+```
+
+This build is for redistributing the EMC driver via Maven / plain JARs (e.g. for use from the [Epsilon Ant tasks](https://www.eclipse.org/epsilon/doc/workflow/)), and for developers that are not using Eclipse.
+
+Specifically, this plain Maven build does not run the `create-magicdraw-plugin.sh` script, which is needed when developing the EMC driver as an Eclipse plugin.
+
 ## Other resources
 
 * [Blog post on using Xtend from a Cameo/MagicDraw plugin](https://blogs.itemis.com/en/model-transformations-for-mbse-with-cameo-and-xtend)
