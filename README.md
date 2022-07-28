@@ -34,12 +34,12 @@ The `run-eclipse` target in the [`examples/org.eclipse.epsilon.emc.magicdraw.exa
 You should only need to use the [`epsilon.loadModel` Ant task](https://www.eclipse.org/epsilon/doc/workflow/#model-loading-tasks) with `type="MagicDrawRemote"`, while specifying any `<parameters>` as desired.
 Please check the previous link in this paragraph for the supported properties.
 
-### Using the drver from Ant outside Eclipse
+### Using the driver from Ant outside Eclipse
 
 The `run-standalone` target in the [`examples/org.eclipse.epsilon.emc.magicdraw.examples.etl/build.xml`](examples/org.eclipse.epsilon.emc.magicdraw.examples.etl/build.xml) also shows how to use the driver when the Ant workflow is not running from Eclipse's JRE.
 
-It will require the driver, the Epsilon Ant tasks, and their dependencies to be in the classpath.
-One easy way to achieve this is to download the `org.eclipse.epsilon.emc.*.antidst*-ant.zip` file in the latest release, unzip it, and then ask Ant to load all its `.jar` files into its classpath during execution:
+It will require the driver, the Epsilon Ant tasks, and their dependencies to be in the classpath, and you will need to specifically mention the Java class of the driver in the `impl` attribute of the `epsilon.loadModel` task.
+One easy way to populate the classpath (especially when running from inside corporate firewalls) is to download the `org.eclipse.epsilon.emc.*.antidst*-ant.zip` file in the latest release, unzip it, and then ask Ant to load all its `.jar` files into its classpath during execution:
 
 ```shell
 ant -lib path/to/antdist/lib run-standalone
