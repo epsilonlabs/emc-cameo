@@ -19,14 +19,13 @@ To install the latest [release](https://github.com/epsilonlabs/emc-cameo/release
 
 ## Overall repository structure
 
+* `bundles`: Eclipse plugin project for the EMC driver.
+* `examples`: example Eclipse projects using the EMC driver.
 * `magicdraw-plugins`: source code for the MagicDraw plugin needed to gain access to MagicDraw/Cameo models.
   * `org.eclipse.epsilon.emc.magicdraw.mdplugin.remote`: the actual MagicDraw plugin, as a plain Java project. Implements a remote model access server.
   * `org.eclipse.epsilon.emc.magicdraw.modelapi`: the gRPC client/server stubs for accessing models, as a Maven project.
-* `bundles`: Eclipse plugin project for the EMC driver.
-* `releng`: Eclipse target platform, features, and update site.
+* `releng`: Eclipse target platform, Eclipse features, Eclipse update site, and an Ant-oriented self-contained distribution for users behind corporate firewalls.
 * `tests`: Eclipse fragment projects to test the EMC driver, along with sample MagicDraw models.
-
-The bundles/releng/tests part is meant to take advantage of [Tycho POM-less builds](https://wiki.eclipse.org/Tycho/pomless) in the future, which take that structure as a convention.
 
 ## Preparing a development environment
 
@@ -92,7 +91,7 @@ You can also run a plain Maven build using the parallel hierarchy of `pom-plain.
 mvn -f pom-plain.xml clean install
 ```
 
-This build is for redistributing the EMC driver via Maven / plain JARs (e.g. for use from the [Epsilon Ant tasks](https://www.eclipse.org/epsilon/doc/workflow/)), and for developers that are not using Eclipse.
+This build is for redistributing the EMC driver via Maven as plain JARs (e.g. for use from the [Epsilon Ant tasks](https://www.eclipse.org/epsilon/doc/workflow/)), for generating the Ant-oriented self-contained distribution, and for developers that are not using Eclipse.
 
 Specifically, this plain Maven build does not run the `create-magicdraw-plugin.sh` script, which is needed when developing the EMC driver as an Eclipse plugin.
 
