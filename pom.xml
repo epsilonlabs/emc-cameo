@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
-	       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.eclipse.epsilon.emc.magicdraw</groupId>
@@ -36,10 +36,10 @@
                 <groupId>org.eclipse.tycho</groupId>
                 <artifactId>tycho-compiler-plugin</artifactId>
                 <version>${tycho-version}</version>
-	              <configuration>
-	                  <source>1.8</source>
-	                  <target>1.8</target>
-	              </configuration>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.eclipse.tycho</groupId>
@@ -52,7 +52,7 @@
                         <version>${tycho-version}</version>
                     </dependency>
                 </dependencies>
-	              <configuration>
+                <configuration>
                     <strictVersions>false</strictVersions>
                     <timestampProvider>jgit</timestampProvider>
                     <jgit.dirtyWorkingTree>warning</jgit.dirtyWorkingTree>
@@ -66,25 +66,25 @@
                 </configuration>
             </plugin>
             <plugin>
-	              <groupId>org.eclipse.tycho</groupId>
-	              <artifactId>tycho-surefire-plugin</artifactId>
-	              <version>${tycho-version}</version>
-	              <configuration>
+                <groupId>org.eclipse.tycho</groupId>
+                <artifactId>tycho-surefire-plugin</artifactId>
+                <version>${tycho-version}</version>
+                <configuration>
                     <argLine>-Xms1500m -Xmx1500m -XX:+UseG1GC -XX:+UseStringDeduplication -XX:MaxDirectMemorySize=2g -Dstorage.diskCache.bufferSize=300 -Dmemory.chunk.size=1073741824</argLine>
-	              </configuration>
+                </configuration>
             </plugin>
             <plugin>
-	              <groupId>org.eclipse.tycho</groupId>
-	              <artifactId>target-platform-configuration</artifactId>
-	              <version>${tycho-version}</version>
-	              <configuration>
-	                  <target>
-	                      <artifact>
-	                          <groupId>${project.groupId}</groupId>
-	                          <artifactId>org.eclipse.epsilon.emc.magicdraw.targetplatform</artifactId>
-	                          <version>${project.parent.version}</version>
-	                      </artifact>
-	                  </target>
+                <groupId>org.eclipse.tycho</groupId>
+                <artifactId>target-platform-configuration</artifactId>
+                <version>${tycho-version}</version>
+                <configuration>
+                    <target>
+                        <artifact>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>org.eclipse.epsilon.emc.magicdraw.targetplatform</artifactId>
+                            <version>${project.parent.version}</version>
+                        </artifact>
+                    </target>
                     <environments>
                         <environment>
                             <os>win32</os>
@@ -102,32 +102,32 @@
                             <arch>x86_64</arch>
                         </environment>
                     </environments>
-	              </configuration>
+                </configuration>
             </plugin>
             <plugin>
-	              <groupId>org.eclipse.tycho</groupId>
-	              <artifactId>tycho-source-plugin</artifactId>
-	              <version>${tycho-version}</version>
-	              <executions>
-	                  <execution>
-	                      <id>attach-source</id>
-	                      <goals>
-	                          <goal>plugin-source</goal>
-	                      </goals>
-	                  </execution>
+                <groupId>org.eclipse.tycho</groupId>
+                <artifactId>tycho-source-plugin</artifactId>
+                <version>${tycho-version}</version>
+                <executions>
+                    <execution>
+                        <id>attach-source</id>
+                        <goals>
+                            <goal>plugin-source</goal>
+                        </goals>
+                    </execution>
                     <execution>
                         <id>source-feature</id>
                         <goals>
                             <goal>feature-source</goal>
                         </goals>
                     </execution>
-	              </executions>
+                </executions>
             </plugin>
             <plugin>
-	              <groupId>org.eclipse.tycho</groupId>
-	              <artifactId>tycho-p2-plugin</artifactId>
-	              <version>${tycho-version}</version>
-	              <executions>
+                <groupId>org.eclipse.tycho</groupId>
+                <artifactId>tycho-p2-plugin</artifactId>
+                <version>${tycho-version}</version>
+                <executions>
                     <execution>
                         <id>attach-p2-metadata</id>
                         <phase>package</phase>
@@ -135,7 +135,7 @@
                             <goal>p2-metadata</goal>
                         </goals>
                     </execution>
-	              </executions>
+                </executions>
             </plugin>
         </plugins>
     </build>
