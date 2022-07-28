@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.eclipse.epsilon.common.util.StringProperties;
@@ -310,7 +311,13 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 		sessionState.cancel();
 
 		if (channel != null) {
-			channel.shutdown();
+			try {
+				channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+			} catch (InterruptedException e) {
+				LOGGER.warn(e.getMessage(), e);
+				channel.shutdownNow();
+			}
+
 			channel = null;
 			client = null;
 		}

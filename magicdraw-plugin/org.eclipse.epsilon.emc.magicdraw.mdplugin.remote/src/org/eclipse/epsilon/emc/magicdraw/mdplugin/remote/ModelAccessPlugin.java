@@ -29,11 +29,7 @@ public class ModelAccessPlugin extends Plugin {
 	@Override
 	public boolean close() {
 		if (server != null) {
-			try {
-				server.stop();
-			} catch (InterruptedException e) {
-				LOGGER.error(e.getMessage(), e);
-			}
+			server.stop();
 		}
 		return true;
 	}

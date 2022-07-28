@@ -47,20 +47,21 @@ public class ModelAccessServer {
 			@Override
 			public void run() {
 				System.err.println("*** shutting down Epsilon model access server since JVM is shutting down");
-				try {
-					ModelAccessServer.this.stop();
-				} catch (InterruptedException e) {
-					e.printStackTrace(System.err);
-				}
+				ModelAccessServer.this.stop();
 				System.err.println("*** Epsilon model access server shut down");
 			}
 		});
 	}
 
 	/** Stop serving requests and shutdown resources. */
-	public void stop() throws InterruptedException {
+	public void stop() {
 		if (server != null) {
-			server.shutdown().awaitTermination(30, TimeUnit.SECONDS);
+			try {
+				server.shutdown().awaitTermination(30, TimeUnit.SECONDS);
+			} catch (InterruptedException e) {
+				LOGGER.error(e.getMessage(), e);
+				server.shutdownNow();
+			}
 		}
 	}
 
