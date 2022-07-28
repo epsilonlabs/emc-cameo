@@ -9,7 +9,7 @@ It uses [gRPC](https://grpc.io) to communicate with a running MagicDraw/Cameo in
 
 For developer instructions, please check [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-## Installation instructions
+## Installation and usage instructions
 
 Download the `cameo-mdplugin-*.zip` from the [latest release](https://github.com/epsilonlabs/emc-cameo/releases) of the plugin, and unzip it into your MagicDraw/Cameo `plugins` directory.
 
