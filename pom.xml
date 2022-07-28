@@ -15,9 +15,13 @@
     </properties>
 
     <modules>
-        <module>bundles</module>
-        <module>releng</module>
-        <module>tests</module>
+        <module>bundles/org.eclipse.epsilon.emc.magicdraw.remote</module>
+        <module>bundles/org.eclipse.epsilon.emc.magicdraw.remote.dt</module>
+        <module>releng/org.eclipse.epsilon.emc.magicdraw.remote.feature</module>
+        <module>releng/org.eclipse.epsilon.emc.magicdraw.targetplatform</module>
+        <module>releng/org.eclipse.epsilon.emc.magicdraw.updatesite</module>
+        <module>releng/org.eclipse.epsilon.emc.magicdraw.remote.dt.feature</module>
+        <module>tests/org.eclipse.epsilon.emc.magicdraw.remote.tests</module>
     </modules>
 
     <build>
