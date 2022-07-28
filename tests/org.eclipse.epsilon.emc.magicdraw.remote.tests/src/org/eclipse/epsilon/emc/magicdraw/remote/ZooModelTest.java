@@ -408,6 +408,65 @@ public class ZooModelTest {
 		assertEquals("Setting the attributes of Animal to those of Lion should leave Lion with all the original attributes of Animal", originalAttributeCount, (int) module.execute());
 	}
 
+	@Test
+	public void assignEmptyListToProxyList() throws Exception {
+		EolModule module = createEOLModule();
+		module.parse("var animal = Class.all.selectOne(c|c.name='Animal'); return animal.ownedAttribute.isEmpty();");
+		assertFalse("Originally, the Animal class should have attributes", (boolean) module.execute());
+
+		module.parse("var animal = Class.all.selectOne(c|c.name='Animal'); animal.ownedAttribute = Sequence {};");
+		module.execute();
+
+		module.parse("var animal = Class.all.selectOne(c|c.name='Animal'); return animal.ownedAttribute.isEmpty();");
+		assertTrue("After the assignment, the Animal class should have no attributes", (boolean) module.execute());
+	}
+
+	@Test
+	public void assignOneModelElementListToProxyList() throws Exception {
+		EolModule module = createEOLModule();
+		module.parse("var animal = Class.all.selectOne(c|c.name='Animal'); return animal.ownedAttribute.size();");
+		final int originalAttributeCount = (int) module.execute();
+
+		module.parse("var animal = Class.all.selectOne(c|c.name='Animal'); var lion = Class.all.selectOne(c|c.name='Lion'); lion.ownedAttribute = Sequence { animal.ownedAttribute.first };");
+		module.execute();
+
+		module.parse("return Class.all.selectOne(c|c.name='Animal').ownedAttribute.size();");
+		assertEquals("Moving the first attributes of Animal to Lion should leave Animal with one attribute less", originalAttributeCount - 1, (int) module.execute());
+		module.parse("return Class.all.selectOne(c|c.name='Lion').ownedAttribute.size();");
+		assertEquals("Moving the first attributes of Animal to Lion should leave Lion with one attribute", 1, (int) module.execute());
+	}
+
+	@Test
+	public void assignStringListToProxyList() throws Exception {
+		EolModule module = createEOLModule();
+		module.parse("var interaction = new Interaction; var oa = new OpaqueAction; interaction.action.add(oa); oa.body = Sequence { 'a', 'b' };");
+		module.execute();
+
+		module.parse("return OpaqueAction.all.first.body.size();");
+		assertEquals("After the assignment, the new OpaqueAction should have two elements in .body", 2, module.execute());
+	}
+
+	@Test
+	public void assignBooleanListToProxyList() throws Exception {
+		EolModule module = createEOLModule();
+		module.parse("var btv = new BooleanTaggedValue; btv.value = Sequence { true, false }; return btv.value.size();");
+		assertEquals("After the assignment, the new BooleanTaggedValue should have two values", 2, module.execute());
+	}
+
+	@Test
+	public void assignDoubleListToProxyList() throws Exception {
+		EolModule module = createEOLModule();
+		module.parse("var tv = new RealTaggedValue; tv.value = Sequence { 3.14d, 1.3d, 2.9d }; return tv.value.size();");
+		assertEquals("After the assignment, the new RealTaggedValue should have three values", 3, module.execute());
+	}
+
+	@Test
+	public void assignIntegerListToProxyList() throws Exception {
+		EolModule module = createEOLModule();
+		module.parse("var tv = new IntegerTaggedValue; tv.value = Sequence { 1, 2, 3, 27, 5 }; return tv.value.size();");
+		assertEquals("After the assignment, the new IntegerTaggedValue should have five values", 5, module.execute());
+	}
+
 	private EolModule createEOLModule() {
 		EolModule module = new EolModule();
 		module.getContext().getModelRepository().addModel(m);

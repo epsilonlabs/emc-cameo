@@ -523,14 +523,6 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 			.asRuntimeException();
 	}
 
-	private Either<StatusRuntimeException, EList<Object>> getEListForProxyList(ProxyList request) {
-		return inProject()
-			.flatMapRight((project) -> getElementByID(project, request.getElementID())
-			.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getFeatureName())
-			.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
-		)));
-	}
-
 	@SuppressWarnings("unchecked")
 	private Either<StatusRuntimeException, EList<Object>> getEList(MDObject mdObject, EStructuralFeature eFeature) {
 		if (!eFeature.isMany()) {

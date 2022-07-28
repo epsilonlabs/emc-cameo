@@ -10,10 +10,13 @@
  *******************************************************************************/
 package org.eclipse.epsilon.emc.magicdraw.mdplugin.remote.emf;
 
+import java.util.stream.Collectors;
+
 import org.eclipse.emf.ecore.EDataType;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.EnumerationValue;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
 
@@ -35,21 +38,37 @@ public class ValueDecoder {
 		case BOOLEANVALUE: return value.getBooleanValue();
 		case FLOATVALUE: return value.getFloatValue();
 		case DOUBLEVALUE: return value.getDoubleValue();
-		case ENUMERATIONVALUE: {
-			final EDataType eDataType = (EDataType) targetFeature.getEType();
-			final String literal = value.getEnumerationValue().getLiteral();
-			return EcoreUtil.createFromString(eDataType, literal);
-		}
-		case REFERENCEVALUE: {
-			final ModelElement elem = value.getReferenceValue();
-			return project.getElementByID(elem.getElementID());
-		}
+		case ENUMERATIONVALUE: return decode(targetFeature, value.getEnumerationValue());
+		case REFERENCEVALUE: return decode(project, value.getReferenceValue());
 		case LONGVALUE: return value.getLongValue();
 		case INTEGERVALUE: return value.getIntegerValue();
 		case SHORTVALUE: return (short) value.getShortValue();
 		case BYTEVALUE: return (byte) value.getByteValue();
 
-		// TODO lists (both literal and proxies)
+		case STRINGVALUES:
+			return value.getStringValues().getValuesList().stream().collect(Collectors.toList());
+		case BOOLEANVALUES:
+			return value.getBooleanValues().getValuesList().stream().collect(Collectors.toList());
+		case FLOATVALUES:
+			return value.getFloatValues().getValuesList().stream().collect(Collectors.toList());
+		case DOUBLEVALUES:
+			return value.getDoubleValues().getValuesList().stream().collect(Collectors.toList());
+		case ENUMERATIONVALUES:
+			return value.getEnumerationValues().getValuesList().stream()
+				.map(e -> decode(targetFeature, e))
+				.collect(Collectors.toList());
+		case REFERENCEVALUES:
+			return value.getReferenceValues().getValuesList().stream()
+				.map(e -> decode(project, e))
+				.collect(Collectors.toList());
+		case LONGVALUES:
+			return value.getLongValues().getValuesList().stream().collect(Collectors.toList());
+		case INTEGERVALUES:
+			return value.getIntegerValues().getValuesList().stream().collect(Collectors.toList());
+		case SHORTVALUES:
+			return value.getShortValues().getValuesList().stream().map(e -> e.shortValue()).collect(Collectors.toList());
+		case BYTEVALUES:
+			return value.getByteValues().getValuesList().stream().map(e -> e.byteValue()).collect(Collectors.toList());
 
 		case PROXYLIST: {
 			MDObject element = (MDObject) project.getElementByID(value.getProxyList().getElementID());
@@ -62,6 +81,16 @@ public class ValueDecoder {
 		}
 
 		throw new IllegalArgumentException(String.format("Unknown value case %s", value.getValueCase().name()));
+	}
+
+	private Object decode(EStructuralFeature targetFeature, final EnumerationValue enumValue) {
+		final EDataType eDataType = (EDataType) targetFeature.getEType();
+		final String literal = enumValue.getLiteral();
+		return EcoreUtil.createFromString(eDataType, literal);
+	}
+
+	private Object decode(Project project, final ModelElement elem) {
+		return project.getElementByID(elem.getElementID());
 	}
 
 }
