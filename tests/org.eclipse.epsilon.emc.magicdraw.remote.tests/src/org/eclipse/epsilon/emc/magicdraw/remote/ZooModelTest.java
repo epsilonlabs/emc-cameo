@@ -365,8 +365,6 @@ public class ZooModelTest {
 	@Test
 	public void moveListObject() throws Exception {
 		EolModule module = createEOLModule();
-		module.parse("return Class.all.selectOne(c|c.name='Animal').ownedAttribute.size();");
-		final int originalAttributeCount = (int) module.execute();
 		module.parse("return Class.all.selectOne(c|c.name='Animal').ownedAttribute.first.name;");
 		final String firstAttributeName = (String) module.execute();
 		module.parse("return Class.all.selectOne(c|c.name='Animal').ownedAttribute.second.name;");
