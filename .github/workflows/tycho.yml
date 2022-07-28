@@ -25,5 +25,5 @@ jobs:
       run: |
         mkdir -p bundles/org.eclipse.epsilon.emc.magicdraw.remote/lib
         mvn -B package -f magicdraw-plugin/org.eclipse.epsilon.emc.magicdraw.modelapi/pom.xml
-        cp magicdraw-plugin/org.eclipse.epsilon.emc.magicdraw.modelapi/target/*-uberjar.jar bundles/org.eclipse.epsilon.emc.magicdraw.remote/lib
+        cp magicdraw-plugin/org.eclipse.epsilon.emc.magicdraw.modelapi/target-plain/*-uberjar.jar bundles/org.eclipse.epsilon.emc.magicdraw.remote/lib
         mvn -B test -f pom.xml

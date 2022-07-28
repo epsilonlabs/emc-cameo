@@ -23,8 +23,8 @@ BUNDLE_VERSION="$(grep Bundle-Version ../../bundles/org.eclipse.epsilon.emc.magi
 SHORT_REV="$(git rev-parse --short HEAD)"
 mvn clean package
 mvn dependency:copy-dependencies "-DoutputDirectory=$PLUGIN_DIR"
-ls target/org.eclipse.epsilon.emc.magicdraw*.jar | grep -v uberjar | xargs cp -t "$PLUGIN_DIR"
-ls target/org.eclipse.epsilon.emc.magicdraw*.jar | grep uberjar | xargs cp -t ../../bundles/org.eclipse.epsilon.emc.magicdraw.remote/lib/
+ls target-plain/org.eclipse.epsilon.emc.magicdraw*.jar | grep -v uberjar | xargs cp -t "$PLUGIN_DIR"
+ls target-plain/org.eclipse.epsilon.emc.magicdraw*.jar | grep uberjar | xargs cp -t ../../bundles/org.eclipse.epsilon.emc.magicdraw.remote/lib/
 
 # Add the remote model access server
 cd ../org.eclipse.epsilon.emc.magicdraw.mdplugin.remote
