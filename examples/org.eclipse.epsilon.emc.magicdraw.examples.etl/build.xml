@@ -25,6 +25,13 @@
 	  unpackaged "-ant.zip" distribution of this driver, by invoking it as:
 	  
 	  ant -lib /path/to/antdist/lib run-standalone
+
+	  If you do have access to Github Packages (i.e. you are not behind a corporate
+	  firewall), it may be easiest to use Maven / Gradle / Ant+IvyDE to automatically
+	  fetch any dependencies. You can use the Epsilon standalone workflow example as
+	  a reference:
+
+	  https://git.eclipse.org/c/epsilon/org.eclipse.epsilon.git/tree/examples/org.eclipse.epsilon.examples.workflow.standalone
 	 -->
 	<target name="run-standalone">
         <taskdef resource="org/eclipse/epsilon/workflow/tasks/tasks.xml"/>
