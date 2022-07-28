@@ -7,7 +7,7 @@
   * `org.eclipse.epsilon.emc.magicdraw.examples.etl`: example ETL transformation from Tree models to MagicDraw class diagrams, launched in three ways: from Ant running in Eclipse's JRE, from a standalone Ant using the self-contained Ant distribution, and from a Maven POM while fetching dependencies from Maven Central and Github Packages.
 * `magicdraw-plugins`: source code for the MagicDraw plugin needed to gain access to MagicDraw/Cameo models.
   * `org.eclipse.epsilon.emc.magicdraw.mdplugin.remote`: the actual MagicDraw plugin, as a plain Java project. Implements a remote model access server.
-  * `org.eclipse.epsilon.emc.magicdraw.modelapi`: the gRPC client/server stubs for accessing models, as a Maven project.
+  * `org.eclipse.epsilon.emc.magicdraw.modelapi`: generates the gRPC client/server stubs for accessing models from a [Protobuf descriptor](magicdraw-plugin/org.eclipse.epsilon.emc.magicdraw.modelapi/src/main/proto/ModelService.proto), as a plain Maven project.
 * `releng`: Eclipse target platform, Eclipse features, Eclipse update site, and an Ant-oriented self-contained distribution for users behind corporate firewalls.
 * `tests`: Eclipse fragment projects to test the EMC driver, along with sample MagicDraw models.
 
