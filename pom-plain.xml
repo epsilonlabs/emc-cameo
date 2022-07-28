@@ -49,6 +49,7 @@
     <module>bundles/org.eclipse.epsilon.emc.magicdraw.remote/pom-plain.xml</module>
     <module>magicdraw-plugin/org.eclipse.epsilon.emc.magicdraw.modelapi/pom.xml</module>
     <module>tests/org.eclipse.epsilon.emc.magicdraw.remote.tests/pom-plain.xml</module>
+    <module>releng/org.eclipse.epsilon.emc.magicdraw.antdist/pom-plain.xml</module>
   </modules>
 
   <build>

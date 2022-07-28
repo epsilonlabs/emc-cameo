@@ -19,11 +19,6 @@
       <outputDirectory>/lib</outputDirectory>
       <useProjectArtifact>true</useProjectArtifact>
       <scope>runtime</scope>
-      <excludes>
-        <!-- The user should provide their own Epsilon JARs (to avoid conflicts) -->
-        <exclude>org.eclipse.epsilon:org.eclipse.epsilon.common</exclude>
-        <exclude>org.eclipse.epsilon:org.eclipse.epsilon.eol.engine</exclude>
-      </excludes>
     </dependencySet>
   </dependencySets>
 </assembly>
