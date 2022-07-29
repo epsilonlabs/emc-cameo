@@ -98,6 +98,7 @@ Before you merge the new feature into the driver, consider the following:
 
 If you are a developer wanting to create a new release, follow these steps:
 
+1. Ensure all relevant changes have been committed and pushed.
 1. Use the `create-magicdraw-plugin.sh` to ensure MagicDraw has the latest version of the plugin needed for the driver.
 1. Start MagicDraw and open the sample Zoo model in the test resources.
 1. Run `mvn -f pom-plain.xml clean install` to do a plain Maven build and run the tests from a plain Java environment.
