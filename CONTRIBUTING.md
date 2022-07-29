@@ -88,7 +88,7 @@ First of all, if the change is potentially large or you are unfamiliar with the 
 
 Before you merge the new feature into the driver, consider the following:
 
-* Does it have a test for the new functionality / the bug that was fixed? We cannot be sure the new feature will continue to work in future releases unless it has a test.
+* Does it have a test for the new functionality / the bug that was fixed? We cannot be sure the new feature / bugfix will continue to work in future releases unless it has a test.
 * Do all tests pass on clean versions of the test MagicDraw models? We cannot run tests on CI due to the dependency on MagicDraw.
 * If the feature is user-facing, does it need further explanation in the `README`?
 * If it impacts the overall developer experience, does `CONTRIBUTING` need to be updated?
