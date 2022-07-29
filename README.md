@@ -25,7 +25,7 @@ You should first [install Epsilon](https://www.eclipse.org/epsilon/download/) fo
 
 You can then download the `org.eclipse.epsilon*.updatesite*.zip` file from the latest release, and install its plugins into your Eclipse IDE.
 
-Once you do that, you will be able to add a new type of model to your Epsilon launch configurations, called a "MagicDraw Instance".
+Once you do that, you will be able to add a new type of model to your Epsilon launch configurations, called "MagicDraw Instance".
 
 ### Using the driver from Ant inside Eclipse
 
@@ -47,6 +47,8 @@ ant -lib path/to/antdist/lib run-standalone
 
 Another option is to use Maven / Gradle / Ivy to automatically download all the dependencies, as done in the [Epsilon standalone Ant example](https://git.eclipse.org/c/epsilon/org.eclipse.epsilon.git/tree/examples/org.eclipse.epsilon.examples.workflow.standalone).
 An adaptation of this approach with Maven is available in the [`examples/org.eclipse.epsilon.emc.magicdraw.examples.etl/pom.xml`](examples/org.eclipse.epsilon.emc.magicdraw.examples.etl/pom.xml) file.
+
+The Maven artifacts for this repository are hosted in Github Packages, which requires [some configuration to be accessed](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-apache-maven-registry).
 
 ## Other resources
 
