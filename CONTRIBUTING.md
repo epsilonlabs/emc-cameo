@@ -103,7 +103,7 @@ If you are a developer wanting to create a new release, follow these steps:
 1. Start MagicDraw and open the sample Zoo model in the test resources.
 1. Run `mvn -f pom-plain.xml clean install` to do a plain Maven build and run the tests from a plain Java environment.
 1. Run `mvn clean install` to do a Tycho build, running the tests from the Tycho environment.
-1. If all tests pass, create a new release on Github, and ensure that you upload:
+1. If all tests pass, create a new release on Github, fill in the release notes with lists of improvements / bugfixes / changes, and ensure that you upload:
    * The `cameo-mdplugin-*.zip` file created by the `create-magicdraw-plugin.sh` script.
    * The zipped update site in `releng/org.eclipse.epsilon.emc.magicdraw.updatesite/target`.
    * The zipped standalone Ant-based distribution in `releng/org.eclipse.epsilon.emc.magicdraw.antdist/target-plain`.
