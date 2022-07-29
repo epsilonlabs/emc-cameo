@@ -82,6 +82,18 @@ Specifically, this plain Maven build does not run the `create-magicdraw-plugin.s
 Note that you will still need a running MagicDraw instance with the appropriate model open to pass the tests.
 Please check the `ZooModelTest` test class for details.
 
+## Checklist for new features / bugfixes
+
+First of all, if the change is potentially large or you are unfamiliar with the project, consider using a [feature branch](https://www.atlassian.com/git/tutorials/comparing-workflows/feature-branch-workflow) to do your work, and then file a pull request to be reviewed by the maintainer.
+
+Before you merge the new feature into the driver, consider the following:
+
+* Does it have a test for the new functionality / the bug that was fixed? We cannot be sure the new feature will continue to work in future releases unless it has a test.
+* Do all tests pass on clean versions of the test MagicDraw models? We cannot run tests on CI due to the dependency on MagicDraw.
+* If the feature is user-facing, does it need further explanation in the `README`?
+* If it impacts the overall developer experience, does `CONTRIBUTING` need to be updated?
+* Do both plain Maven and Tycho builds pass during CI?
+
 ## Preparing a new release
 
 If you are a developer wanting to create a new release, follow these steps:
