@@ -48,7 +48,23 @@ ant -lib path/to/antdist/lib run-standalone
 Another option is to use Maven / Gradle / Ivy to automatically download all the dependencies, as done in the [Epsilon standalone Ant example](https://git.eclipse.org/c/epsilon/org.eclipse.epsilon.git/tree/examples/org.eclipse.epsilon.examples.workflow.standalone).
 An adaptation of this approach with Maven is available in the [`examples/org.eclipse.epsilon.emc.magicdraw.examples.etl/pom.xml`](examples/org.eclipse.epsilon.emc.magicdraw.examples.etl/pom.xml) file.
 
+### Maven artifacts
+
 The Maven artifacts for this repository are hosted in Github Packages, which requires [some configuration to be accessed](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-apache-maven-registry).
+
+Once you have set up your authentication to Github Packages, you can access them by adding this `<repository>` element to Maven:
+
+```xml
+<repository>
+  <id>github</id>
+  <url>https://maven.pkg.github.com/epsilonlabs/emc-cameo</url>
+  <snapshots>
+    <enabled>true</enabled>
+  </snapshots>
+</repository>
+```
+
+Note that if you are using the repository from the Maven `antrun` plugin, it will need to be a `<pluginRepository>` element instead.
 
 ## Other resources
 
