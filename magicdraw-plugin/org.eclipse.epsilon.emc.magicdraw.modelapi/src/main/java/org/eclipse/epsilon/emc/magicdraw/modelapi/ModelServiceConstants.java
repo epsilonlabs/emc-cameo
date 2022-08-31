@@ -12,6 +12,9 @@ package org.eclipse.epsilon.emc.magicdraw.modelapi;
 
 public interface ModelServiceConstants {
 
+	int DEFAULT_PORT = 8123;
+	String DEFAULT_HOST = "localhost";
+
 	String REASON_CANNOT_FIND_TYPE = "type-not-found";
 	String REASON_CANNOT_INSTANTIATE_TYPE = "type-not-instantiable";
 

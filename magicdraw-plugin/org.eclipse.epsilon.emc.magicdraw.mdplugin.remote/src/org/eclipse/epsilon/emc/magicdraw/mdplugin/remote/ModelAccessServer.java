@@ -11,38 +11,42 @@
 package org.eclipse.epsilon.emc.magicdraw.mdplugin.remote;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.grpc.Server;
-import io.grpc.ServerBuilder;
+import io.grpc.netty.NettyServerBuilder;
 
 /**
  * gRPC-based server to access models.
  */
 public class ModelAccessServer {
 
-	public static final int DEFAULT_PORT = 8123;
 	private static final Logger LOGGER = LoggerFactory.getLogger(ModelAccessServer.class);
 
-	private final int port;
+	private final String host;
 	private final Server server;
 
 	public ModelAccessServer() {
-		this(DEFAULT_PORT);
+		this(ModelServiceConstants.DEFAULT_HOST, ModelServiceConstants.DEFAULT_PORT);
 	}
 
-	public ModelAccessServer(int port) {
-		this.port = port;
-		this.server = ServerBuilder.forPort(port).addService(new ModelAccessService()).build();
+	public ModelAccessServer(String host, int port) {
+		this.host = host;
+		this.server = NettyServerBuilder
+			.forAddress(new InetSocketAddress(host, port))
+			.addService(new ModelAccessService())
+			.build();
 	}
 
 	public void start() throws IOException {
 		server.start();
 
-		LOGGER.info("Model access server started, listening on port " + port);
+		LOGGER.info(String.format("Model access server started, listening on %s:%d", host, server.getPort()));
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
