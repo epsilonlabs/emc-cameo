@@ -4,7 +4,7 @@
     <stringAttribute key="implementation_name" value="Parallel (Declarative operations)"/>
     <listAttribute key="models">
         <listEntry value="aliases=&#10;reuseUnmodifiedFileBasedMetamodels=true&#10;modelFile=/org.eclipse.epsilon.emc.magicdraw.examples.etl/tree.model&#10;metamodelUri=&#10;concurrent=false&#10;type=EMF&#10;readOnLoad=true&#10;storeOnDisposal=false&#10;expand=true&#10;fileBasedMetamodelUri=platform\:/resource/org.eclipse.epsilon.emc.magicdraw.examples.etl/Tree.ecore&#10;metamodelFile=/org.eclipse.epsilon.emc.magicdraw.examples.etl/Tree.ecore&#10;cached=true&#10;name=Tree&#10;modelUri=platform\:/resource/org.eclipse.epsilon.emc.magicdraw.examples.etl/tree.model&#10;isMetamodelFileBased=true&#10;validate=false"/>
-        <listEntry value="storeOnDisposal=true&#10;aliases=&#10;cached=true&#10;name=MagicDraw&#10;concurrent=false&#10;type=MagicDrawRemote&#10;readOnLoad=true"/>
+        <listEntry value="storeOnDisposal=true&#10;server.host=localhost&#10;aliases=&#10;cached=true&#10;name=MagicDraw&#10;concurrent=false&#10;server.port=8123&#10;type=MagicDrawRemote&#10;readOnLoad=true"/>
     </listAttribute>
     <intAttribute key="parallelism" value="7"/>
     <listAttribute key="parameters"/>

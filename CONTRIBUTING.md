@@ -91,7 +91,7 @@ Before you merge the new feature into the driver, consider the following:
 * Does it have a test for the new functionality / the bug that was fixed? We cannot be sure the new feature / bugfix will continue to work in future releases unless it has a test.
 * Do all tests pass on clean versions of the test MagicDraw models? We cannot run tests on CI due to the dependency on MagicDraw.
 * If the change is user-facing, does it need further explanation in [`README.md`](README.md)?
-* If it impacts the developer experience, does `CONTRIBUTING.md` need to be updated?
+* If it impacts the developer experience, does this `CONTRIBUTING.md` need to be updated?
 * Do both plain Maven and Tycho builds pass during CI?
 
 ## Preparing a new release

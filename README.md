@@ -19,6 +19,17 @@ For now, you will need to manually open the model you want to manipulate in Magi
 Once this is done, you can use the driver in several ways as listed below.
 You may want to check the sample scripts to the [`examples`](examples) folder.
 
+### Configuring the server port
+
+The gRPC server will be listening on `localhost:8123` by default.
+If you want to change this, edit your `magicdraw.properties` file, adding something like this to the end of your `JAVA_ARGS`:
+
+```text
+JAVA_ARGS=... -Depsilon.emc.host=yourhost -Depsilon.emc.port=9001
+```
+
+You will need to configure your `MagicDrawModel`s accordingly (via the Eclipse GUI, through the `PROPERTY_HOST` / `PROPERTY_PORT` properties, or through the `setHost` and `setPort` methods).
+
 ### Using the driver from Eclipse
 
 You should first [install Epsilon](https://www.eclipse.org/epsilon/download/) following the official instructions.
