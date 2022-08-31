@@ -60,6 +60,7 @@ import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.protobuf.ProtoUtils;
 
 public class MagicDrawModel extends CachedModel<MDModelElement> {
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(MagicDrawModel.class);
 	
 	private static final int HAS_TYPE_CACHE_SIZE = 100;
@@ -70,6 +71,11 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	private ManagedChannel channel;
 	protected ModelServiceBlockingStub client;
 
+	public static final String PROPERTY_HOST = "server.host";
+	public static final String PROPERTY_PORT = "server.port";
+
+	private String host = ModelServiceConstants.DEFAULT_HOST;
+	private int port = ModelServiceConstants.DEFAULT_PORT;
 	private String rootElementHyperlink;
 
 	protected final ValueEncoder encoder = new ValueEncoder();
@@ -146,6 +152,22 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 		this.rootElementHyperlink = rootElementHyperlink;
 	}
 
+	public String getHost() {
+		return host;
+	}
+
+	public void setHost(String host) {
+		this.host = host;
+	}
+
+	public int getPort() {
+		return port;
+	}
+
+	public void setPort(int port) {
+		this.port = port;
+	}
+
 	@Override
 	public boolean store() {
 		sessionState.close();
@@ -155,7 +177,7 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	@Override
 	protected void loadModel() throws EolModelLoadingException {
 		// Connect to MagicDraw
-		channel = NettyChannelBuilder.forAddress(new InetSocketAddress("localhost", 8123)).usePlaintext().build();
+		channel = NettyChannelBuilder.forAddress(new InetSocketAddress(host, port)).usePlaintext().build();
 		client = ModelServiceGrpc.newBlockingStub(channel);
 		try {
 			client.ping(Empty.newBuilder().build());
@@ -171,7 +193,8 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	public void load(StringProperties properties, IRelativePathResolver resolver) throws EolModelLoadingException {
 		super.load(properties, resolver);
 
-		// TODO add properties for custom host + port
+		setHost(properties.getProperty(PROPERTY_HOST, ModelServiceConstants.DEFAULT_HOST));
+		setPort(properties.getIntegerProperty(PROPERTY_PORT, ModelServiceConstants.DEFAULT_PORT));
 
 		load();
 	}
