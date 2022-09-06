@@ -48,6 +48,8 @@ cd magicdraw-plugin/org.eclipse.epsilon.emc.magicdraw.modelapi
 ./create-magicdraw-plugin.sh path/to/magicdraw/plugins
 ```
 
+*Note*: in Git Bash on Windows, the path will most likely be of the form `"/C/Program Files/MagicDraw Demo/plugins"`.
+
 You must rerun this script every time you change the `ModelService.proto` file in the `magicdraw.modelapi` plugin.
 You must also rerun the script whenever you change the `mdplugin.remote` project, but you can avoid some of this if you are using hot code swapping via remote debugging (see below).
 
