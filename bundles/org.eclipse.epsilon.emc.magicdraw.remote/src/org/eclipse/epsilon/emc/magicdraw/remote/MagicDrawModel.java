@@ -151,7 +151,7 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	}
 
 	public void setRootElementHyperlink(String rootElementHyperlink) {
-		if (rootElementHyperlink != null && !rootElementHyperlink.isBlank()) {
+		if (rootElementHyperlink != null && !rootElementHyperlink.trim().isEmpty()) {
 			this.rootElementHyperlink = rootElementHyperlink;
 		} else {
 			this.rootElementHyperlink = null;
