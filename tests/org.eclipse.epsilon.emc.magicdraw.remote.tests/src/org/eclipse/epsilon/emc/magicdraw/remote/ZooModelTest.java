@@ -147,6 +147,23 @@ public class ZooModelTest {
 			originalClassCount + 1, classCount());
 	}
 
+	@Test
+	public void createClassWithinChildPackage() throws Exception {
+		// Originally, this package should be empty
+		EolModule module = createEOLModule();
+		module.parse("return Package.all.selectOne(p|p.name='TestPackage').ownedElement.size();");
+		assertEquals(0, module.execute());
+
+		// If we treat it as the root of the model, then created instances should go directly here
+		m.setRootElementHyperlink("mdel://_2021x_2_71601c9_1662468071986_336225_1290");
+		m.createInstance("Class");
+
+		// We go back to seeing the whole model, so we can find the TestPackage and check if the class got created there
+		m.setRootElementHyperlink(null);
+		module.parse("return Package.all.selectOne(p|p.name='TestPackage').ownedElement.size();");
+		assertEquals(1, module.execute());
+	}
+
 	@Test(expected=EolModelElementTypeNotFoundException.class)
 	public void createMissingType() throws Exception {
 		m.createInstance("IDoNotExist");
@@ -506,7 +523,6 @@ public class ZooModelTest {
 		m = new MagicDrawModel();
 		m.setReadOnLoad(true);
 		m.setStoredOnDisposal(false);
-		m.setRootElementHyperlink("mdel://eee_1045467100313_135436_1");
 		m.load();
 	}
 

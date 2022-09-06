@@ -118,29 +118,28 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	@Override
 	public void allOf(AllOfRequest request, StreamObserver<ModelElementCollection> responseObserver) {
 		sendResponse(responseObserver, inProject().flatMapRight((project) ->
-			findEClassifier(request.getTypeName()).flatMapRight((eClassifier) -> {
-				EObject root;
-				final String rootElementHyperlink = request.getRootElementHyperlink();
-				if (rootElementHyperlink == null || rootElementHyperlink.length() == 0) {
-					root = project.getPrimaryModel();
-				} else {
-					BaseElement element = Finder.byHyperlink().find(project, rootElementHyperlink);
-					if (element == null) {
-						return Either.left(Status.INVALID_ARGUMENT
-							.withDescription(String.format("Could not find element with URI %s", rootElementHyperlink))
-							.asRuntimeException());
-					} else if (!(element instanceof EObject)) {
-						return Either.left(Status.INVALID_ARGUMENT
-							.withDescription(String.format("Element with URI %s is not an EObject", rootElementHyperlink))
-							.asRuntimeException());
-					} else {
-						root = (EObject) element;
-					}
-				}
+			findEClassifier(request.getTypeName()).flatMapRight((eClassifier) ->
+				findRootElement(request.getRootElementHyperlink(), project).flatMapRight((root) ->
+					Either.right(encoder.encodeAllOf(eClassifier, root, request.getOnlyExactType()))))));
+	}
 
-				return Either.right(encoder.encodeAllOf(eClassifier, root, request.getOnlyExactType()));
-			})
-		));
+	private Either<StatusRuntimeException, EObject> findRootElement(String rootElementHyperlink, Project project) {
+		if (rootElementHyperlink == null || rootElementHyperlink.trim().length() == 0) {
+			return Either.right(project.getPrimaryModel());
+		} else {
+			BaseElement element = Finder.byHyperlink().find(project, rootElementHyperlink);
+			if (element == null) {
+				return Either.left(Status.INVALID_ARGUMENT
+					.withDescription(String.format("Could not find element with URI %s", rootElementHyperlink))
+					.asRuntimeException());
+			} else if (!(element instanceof EObject)) {
+				return Either.left(Status.INVALID_ARGUMENT
+					.withDescription(String.format("Element with URI %s is not an EObject", rootElementHyperlink))
+					.asRuntimeException());
+			} else {
+				return Either.right((EObject) element);
+			}
+		}
 	}
 
 	@Override
@@ -294,9 +293,19 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 							Method mCreateInstance = factory.getClass().getMethod(methodName);
 							MDObject mdObject = (MDObject) mCreateInstance.invoke(factory);
 							if (mdObject instanceof PackageableElement) {
-								// TODO support a rootElementHyperlink option for indicating where model elements should be created
-								ModelElementsManager.getInstance().addElement((Element) mdObject, project.getPrimaryModel());
+								return findRootElement(request.getRootElementHyperlink(), project).flatMapRight((root) -> {
+									try {
+										ModelElementsManager.getInstance().addElement((Element) mdObject, (Element) root);
+										return Either.right(encoder.encode(mdObject));
+									} catch (ReadOnlyElementException e) {
+										LOGGER.error(e.getMessage(), e);
+										return Either.left(Status.INVALID_ARGUMENT
+												.withDescription(String.format("Element with ID %s is read only", ((Element) root).getID()))
+												.asRuntimeException());
+									}
+								});
 							}
+
 							return Either.right(encoder.encode(mdObject));
 						} catch (NoSuchMethodException e) {
 							LOGGER.error(e.getMessage(), e);

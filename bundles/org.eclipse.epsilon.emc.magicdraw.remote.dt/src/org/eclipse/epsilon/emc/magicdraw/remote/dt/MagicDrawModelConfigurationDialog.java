@@ -26,10 +26,9 @@ public class MagicDrawModelConfigurationDialog extends AbstractCachedModelConfig
 
 	private static final String ERROR_PORT_FORMAT = "The port must be an integer number greater than 0.";
 
-	private Label hostLabel;
 	private Text hostText;
-	private Label portLabel;
 	private Text portText;
+	private Text rootHyperlinkText;
 
 	@Override
 	protected String getModelName() {
@@ -45,19 +44,36 @@ public class MagicDrawModelConfigurationDialog extends AbstractCachedModelConfig
 	protected void createGroups(Composite control) {
 		super.createGroups(control);
 		createConnectionOptionsGroup(control);
+		createMDOptionsGroup(control);
 		createLoadStoreOptionsGroup(control);
+	}
+
+	private void createMDOptionsGroup(Composite parent) {
+		final Composite groupContent = DialogUtil.createGroupContainer(parent, "MagicDraw/Cameo Options", 2);
+
+		Label rootHyperlinkLabel = new Label(groupContent, SWT.NONE);
+		rootHyperlinkLabel.setText("Root element hyperlink:");
+		rootHyperlinkLabel.setToolTipText("Hyperlink to the package that should act as the root of the model "
+				+ "(for X.all and new instances): this can be found out by right-clicking "
+				+ "on the element and selecting 'Copy Element Hyperlink'");
+
+		rootHyperlinkText = new Text(groupContent, SWT.BORDER);
+		rootHyperlinkText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+		groupContent.layout();
+		groupContent.pack();
 	}
 
 	private void createConnectionOptionsGroup(Composite parent) {
 		final Composite groupContent = DialogUtil.createGroupContainer(parent, "Connection Options", 2);
 
-		hostLabel = new Label(groupContent, SWT.NONE);
+		Label hostLabel = new Label(groupContent, SWT.NONE);
 		hostLabel.setText("Host: ");
 
 		hostText = new Text(groupContent, SWT.BORDER);
 		hostText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
-		portLabel = new Label(groupContent, SWT.NONE);
+		Label portLabel = new Label(groupContent, SWT.NONE);
 		portLabel.setText("Port: ");
 
 		portText = new Text(groupContent, SWT.BORDER);
@@ -90,6 +106,7 @@ public class MagicDrawModelConfigurationDialog extends AbstractCachedModelConfig
 
 		hostText.setText(properties.getProperty(MagicDrawModel.PROPERTY_HOST, ModelServiceConstants.DEFAULT_HOST));
 		portText.setText(properties.getProperty(MagicDrawModel.PROPERTY_PORT, ModelServiceConstants.DEFAULT_PORT + ""));
+		rootHyperlinkText.setText(properties.getProperty(MagicDrawModel.PROPERTY_ROOT_HYPERLINK));
 	}
 
 	@Override
@@ -98,6 +115,7 @@ public class MagicDrawModelConfigurationDialog extends AbstractCachedModelConfig
 
 		properties.put(MagicDrawModel.PROPERTY_HOST, hostText.getText());
 		properties.put(MagicDrawModel.PROPERTY_PORT, portText.getText());
+		properties.put(MagicDrawModel.PROPERTY_ROOT_HYPERLINK, rootHyperlinkText.getText());
 	}
 
 }

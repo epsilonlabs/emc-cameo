@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 
 import org.eclipse.epsilon.common.util.StringProperties;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.AllOfRequest.Builder;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.CreateInstanceRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.DeleteInstanceRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Empty;
@@ -73,6 +74,7 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 
 	public static final String PROPERTY_HOST = "server.host";
 	public static final String PROPERTY_PORT = "server.port";
+	public static final String PROPERTY_ROOT_HYPERLINK = "root.hyperlink";
 
 	private String host = ModelServiceConstants.DEFAULT_HOST;
 	private int port = ModelServiceConstants.DEFAULT_PORT;
@@ -149,7 +151,11 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	}
 
 	public void setRootElementHyperlink(String rootElementHyperlink) {
-		this.rootElementHyperlink = rootElementHyperlink;
+		if (rootElementHyperlink != null && !rootElementHyperlink.isBlank()) {
+			this.rootElementHyperlink = rootElementHyperlink;
+		} else {
+			this.rootElementHyperlink = null;
+		}
 	}
 
 	public String getHost() {
@@ -192,9 +198,10 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	@Override
 	public void load(StringProperties properties, IRelativePathResolver resolver) throws EolModelLoadingException {
 		super.load(properties, resolver);
-
+ 
 		setHost(properties.getProperty(PROPERTY_HOST, ModelServiceConstants.DEFAULT_HOST));
 		setPort(properties.getIntegerProperty(PROPERTY_PORT, ModelServiceConstants.DEFAULT_PORT));
+		setRootElementHyperlink(properties.getProperty(PROPERTY_ROOT_HYPERLINK));
 
 		load();
 	}
@@ -265,9 +272,11 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 
 	@Override
 	protected Collection<MDModelElement> allContentsFromModel() {
-		final AllOfRequest request = AllOfRequest.newBuilder()
-			.setRootElementHyperlink(rootElementHyperlink)
-			.build();
+		Builder builder = AllOfRequest.newBuilder();
+		if (rootElementHyperlink != null) {
+			builder.setRootElementHyperlink(rootElementHyperlink);
+		}
+		final AllOfRequest request = builder.build();
 
 		try {
 			return getAllOfFromModel(request);
@@ -329,7 +338,12 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 		ensureSessionOpened();
 
 		try {
-			ModelElement response = client.createInstance(CreateInstanceRequest.newBuilder().setTypeName(type).build());
+			org.eclipse.epsilon.emc.magicdraw.modelapi.CreateInstanceRequest.Builder builder = CreateInstanceRequest.newBuilder().setTypeName(type);
+			if (rootElementHyperlink != null) {
+				builder.setRootElementHyperlink(rootElementHyperlink);
+			}
+			ModelElement response = client.createInstance(builder.build());
+
 			return new MDModelElement(this, response);
 		} catch (StatusRuntimeException ex) {
 			if (ex.getStatus().getCode() == Code.INVALID_ARGUMENT) {

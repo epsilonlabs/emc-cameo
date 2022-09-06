@@ -145,6 +145,10 @@ message Empty {}
 
 message CreateInstanceRequest {
     string typeName = 1;
+
+    // If specified, the model element will be added to the package referenced from here
+    // (right-click on the package in MagicDraw / Cameo and select "Copy Element Hyperlink")
+    string rootElementHyperlink = 2;
 }
 
 message DeleteInstanceRequest {
