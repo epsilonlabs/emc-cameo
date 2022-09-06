@@ -18,12 +18,14 @@
 You will need:
 
 * A recent version of the [Eclipse Modeling Tools](https://www.eclipse.org/downloads/).
-* A Java 11 or newer JDK.
+* A Java 11 or newer JDK, with `jar` accessible from your PATH environment variable.
 * [M2Eclipse](https://www.eclipse.org/m2e/).
+* [Maven](https://maven.apache.org/install.html) should be available via `mvn` in your PATH.
+* The `zip` utility should be available in your PATH (e.g. the `zip`  package in Ubuntu, or [its port to Windows](http://gnuwin32.sourceforge.net/packages/zip.htm)).
 * A MagicDraw 2021x installation (MagicDraw has a [free demo](https://www.magicdraw.com/download/magicdraw), only limited in model size).
 
 Currently, the build environment uses some Bash scripts.
-If using Windows, you will need [WSL2](https://docs.microsoft.com/en-us/windows/wsl/install).
+If using Windows, you will need to use "Git Bash" (comes with [Git](https://git-scm.com/downloads)), or [WSL2](https://docs.microsoft.com/en-us/windows/wsl/install).
 
 ### Eclipse configuration
 
