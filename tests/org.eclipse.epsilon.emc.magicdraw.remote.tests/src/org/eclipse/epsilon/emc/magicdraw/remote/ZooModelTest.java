@@ -10,10 +10,13 @@
  *******************************************************************************/
 package org.eclipse.epsilon.emc.magicdraw.remote;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.StringStartsWith.startsWith;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeNoException;
 
 import java.util.Collection;
 
@@ -68,8 +71,10 @@ public class ZooModelTest {
 	public void classNames() throws Exception {
 		EolModule module = createEOLModule();
 		module.parse("return Class.all.collect(c | c.name + ' is a ' + c.typeName + ' from ' + c.metamodelUri).sortBy(s|s).first;");
-		String firstClass = (String) module.execute();
-		assertEquals("Animal is a uml::Class from http://www.nomagic.com/magicdraw/UML/2.5.1.1", firstClass);
+		String firstClass	 = (String) module.execute();
+
+		assertThat("Message mentions metamodel", firstClass,
+			startsWith("Animal is a uml::Class from http://www.nomagic.com/magicdraw/UML/"));
 	}
 
 	@Test
@@ -446,6 +451,9 @@ public class ZooModelTest {
 
 	@Test
 	public void assignBooleanListToProxyList() throws Exception {
+		// Note: Cameo Systems Modeler 19.0 does not have BooleanTaggedValue - available from 2021x
+		assumeTypeExists("BooleanTaggedValue");
+
 		EolModule module = createEOLModule();
 		module.parse("var btv = new BooleanTaggedValue; btv.value = Sequence { true, false }; return btv.value.size();");
 		assertEquals("After the assignment, the new BooleanTaggedValue should have two values", 2, module.execute());
@@ -453,6 +461,9 @@ public class ZooModelTest {
 
 	@Test
 	public void assignDoubleListToProxyList() throws Exception {
+		// Note: Cameo Systems Modeler 19.0 does not have RealTaggedValue - available from 2021x
+		assumeTypeExists("RealTaggedValue");
+		
 		EolModule module = createEOLModule();
 		module.parse("var tv = new RealTaggedValue; tv.value = Sequence { 3.14d, 1.3d, 2.9d }; return tv.value.size();");
 		assertEquals("After the assignment, the new RealTaggedValue should have three values", 3, module.execute());
@@ -460,11 +471,22 @@ public class ZooModelTest {
 
 	@Test
 	public void assignIntegerListToProxyList() throws Exception {
+		// Note: Cameo Systems Modeler 19.0 does not have RealTaggedValue - available from 2021x
+		assumeTypeExists("IntegerTaggedValue");
+
 		EolModule module = createEOLModule();
 		module.parse("var tv = new IntegerTaggedValue; tv.value = Sequence { 1, 2, 3, 27, 5 }; return tv.value.size();");
 		assertEquals("After the assignment, the new IntegerTaggedValue should have five values", 5, module.execute());
 	}
 
+	private void assumeTypeExists(String typeName) {
+		try {
+			m.getAllOfKind(typeName);
+		} catch (EolModelElementTypeNotFoundException ex) {
+			assumeNoException(ex);
+		}
+	}
+	
 	private EolModule createEOLModule() {
 		EolModule module = new EolModule();
 		module.getContext().getModelRepository().addModel(m);

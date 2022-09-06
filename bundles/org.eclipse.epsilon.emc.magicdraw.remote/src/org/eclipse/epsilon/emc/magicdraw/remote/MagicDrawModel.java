@@ -269,7 +269,12 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 			.setRootElementHyperlink(rootElementHyperlink)
 			.build();
 
-		return getAllOfFromModel(request);
+		try {
+			return getAllOfFromModel(request);
+		} catch (EolModelElementTypeNotFoundException e) {
+			LOGGER.error(e.getMessage(), e);
+			return Collections.emptyList();
+		}
 	}
 
 	@Override
@@ -284,7 +289,7 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 		return getAllOfFromModel(kind, false);
 	}
 
-	private Collection<MDModelElement> getAllOfFromModel(String type, boolean onlyExactType) {
+	private Collection<MDModelElement> getAllOfFromModel(String type, boolean onlyExactType) throws EolModelElementTypeNotFoundException {
 		AllOfRequest request = AllOfRequest.newBuilder()
 			.setTypeName(type)
 			.setRootElementHyperlink(rootElementHyperlink == null ? "" : rootElementHyperlink)
@@ -294,14 +299,28 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 		return getAllOfFromModel(request);
 	}
 
-	private Collection<MDModelElement> getAllOfFromModel(AllOfRequest request) {
-		ModelElementCollection response = client.allOf(request);
-		List<MDModelElement> elements = new ArrayList<>(response.getValuesCount());
-		for (ModelElement e : response.getValuesList()) {
-			elements.add(new MDModelElement(this, e));
-		}
+	private Collection<MDModelElement> getAllOfFromModel(AllOfRequest request) throws EolModelElementTypeNotFoundException {
+		try {
+			ModelElementCollection response = client.allOf(request);
+			List<MDModelElement> elements = new ArrayList<>(response.getValuesCount());
+			for (ModelElement e : response.getValuesList()) {
+				elements.add(new MDModelElement(this, e));
+			}
 
-		return elements;
+			return elements;
+		} catch (StatusRuntimeException ex) {
+			if (ex.getStatus().getCode() == Code.INVALID_ARGUMENT) {
+				Metadata metadata = Status.trailersFromThrowable(ex);
+				ErrorInfo errInfo = metadata.get(ProtoUtils.keyForProto(ErrorInfo.getDefaultInstance()));
+				if (errInfo != null) {
+					switch (errInfo.getReason()) {
+					case ModelServiceConstants.REASON_CANNOT_FIND_TYPE:
+						throw new EolModelElementTypeNotFoundException(getName(), request.getTypeName());
+					}
+				}
+			}
+			throw ex;
+		}
 	}
 
 	@Override
