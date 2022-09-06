@@ -3,7 +3,7 @@
 ![Maven CI workflow status](https://github.com/epsilonlabs/emc-cameo/actions/workflows/maven.yml/badge.svg)
 ![Tycho CI workflow status](https://github.com/epsilonlabs/emc-cameo/actions/workflows/tycho.yml/badge.svg)
 
-This project contains a prototype [Eclipse Epsilon Model Connectivity](https://www.eclipse.org/epsilon/doc/emc/) (EMC) driver for [MagicDraw](https://magicdraw.com) / [Cameo](https://www.3ds.com/products-services/catia/products/no-magic/cameo-enterprise-architecture/).
+This project contains a prototype [Eclipse Epsilon Model Connectivity](https://www.eclipse.org/epsilon/doc/emc/) (EMC) driver for [MagicDraw](https://magicdraw.com) / [Cameo Systems Modeler](https://www.3ds.com/products-services/catia/products/no-magic/cameo-enterprise-architecture/).
 
 It uses [gRPC](https://grpc.io) to communicate with a running MagicDraw/Cameo instance.
 
