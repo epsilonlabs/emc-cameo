@@ -61,7 +61,7 @@ Edit the `bin/magicdraw.properties` file in the MagicDraw installation, adding t
 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
 ```
 
-This will allow you to use the `Remote Debug MagicDraw.launch` file in the `mdplugin.remote` project while MagicDraw is running.
+This will allow you to use the `Remote Debug MagicDraw.launch` file in the `mdplugin.remote` project while MagicDraw is running (right click and select "Debug As... - Remote Debug MagicDraw").
 While you are in a remote debugging session, any changes you make to method bodies will be reflected in the running instance of MagicDraw.
 If you make changes to the structure of the code (i.e. adding/removing/renaming methods and/or classes), however, hot code swapping will not work: you will need to close MagicDraw, rerun the `create-magicdraw-plugin.sh` script, and start MagicDraw again.
 
