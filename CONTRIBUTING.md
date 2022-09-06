@@ -38,7 +38,7 @@ To do so, right-click on the project in the `Project Explorer` view and select `
 
 ### MagicDraw plugin generation
 
-All compilation errors should be gone at this point.
+All compilation errors in the ` magicdraw.modelapi`  project should be gone at this point.
 The next step is to set up your MagicDraw plugin folder and update the model access API `.jar` used by the EMC driver, by running a shell script:
 
 ```shell
