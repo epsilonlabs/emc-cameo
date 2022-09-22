@@ -18,6 +18,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeNoException;
 
+import java.io.File;
 import java.util.Collection;
 
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
@@ -496,6 +497,15 @@ public class ZooModelTest {
 		assertEquals("After the assignment, the new IntegerTaggedValue should have five values", 5, module.execute());
 	}
 
+	@Test
+	public void tryClosing() throws Exception {
+		/*
+		 * We don't want to open/close for every test (as it is slow and generates many popups in the demo),
+		 * but we should at least try it once.
+		 */
+		m.setClosedOnDisposal(true);
+	}
+
 	private void assumeTypeExists(String typeName) {
 		try {
 			m.getAllOfKind(typeName);
@@ -521,8 +531,11 @@ public class ZooModelTest {
 	@Before
 	public void createZooModel() throws EolModelLoadingException {
 		m = new MagicDrawModel();
+
+		m.setProjectURL(new File("resources/example-zoo.mdzip").getAbsoluteFile().toURI().toString());
 		m.setReadOnLoad(true);
 		m.setStoredOnDisposal(false);
+
 		m.load();
 	}
 

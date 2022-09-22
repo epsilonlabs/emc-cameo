@@ -176,6 +176,11 @@ message ListPositionValue {
     Value value = 3;
 }
 
+message ProjectLocation {
+    // URL to the .mdzip file to be opened
+    string fileURL = 1;
+}
+
 // Main service
 
 service ModelService {
@@ -207,4 +212,9 @@ service ModelService {
     rpc listRemove(ListPosition) returns (Value);
     rpc listMoveObject(ListPositionValue) returns (Empty);
     rpc listClear(ProxyList) returns (Empty);
+
+    // project management API
+    rpc openProject(ProjectLocation) returns (Empty);
+    rpc closeProject(Empty) returns (Empty);
+    rpc saveProject(Empty) returns (Empty);
 }

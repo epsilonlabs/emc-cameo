@@ -13,6 +13,8 @@ package org.eclipse.epsilon.emc.magicdraw.mdplugin.remote;
 import static org.eclipse.epsilon.emc.magicdraw.mdplugin.remote.emf.ModelUtils.getFullyQualifiedName;
 
 import java.lang.reflect.Method;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
@@ -48,6 +50,7 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementTypeReference;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceConstants;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceGrpc;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.OpenSessionRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ProjectLocation;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ProxyList;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.SetFeatureValueRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.SingleInteger;
@@ -55,9 +58,13 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Optional;
 import com.google.rpc.ErrorInfo;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.project.ProjectDescriptor;
+import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
+import com.nomagic.magicdraw.core.project.ProjectsManager;
 import com.nomagic.magicdraw.foundation.MDObject;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
@@ -524,6 +531,72 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 					}
 				})))
 			)));
+	}
+
+	@Override
+	public void openProject(ProjectLocation request, StreamObserver<Empty> responseObserver) {
+		sendResponse(responseObserver, ensureProjectIsActive(request));
+	}
+
+	private Either<StatusRuntimeException, Empty> ensureProjectIsActive(ProjectLocation request) {
+		try {
+			final URI projectURI = new URI(request.getFileURL());
+			final ProjectsManager projectsManager = Application.getInstance().getProjectsManager();
+
+			Optional<Project> project = findProjectByURI(projectURI);
+			if (project.isPresent()) {
+				projectsManager.setActiveProject(project.get());
+			} else {
+				final ProjectDescriptor descriptor = ProjectDescriptorsFactory.createProjectDescriptor(projectURI);
+				final boolean silent = true;
+				projectsManager.loadProject(descriptor, silent);
+
+				project = findProjectByURI(projectURI);
+				if (project.isPresent()) {
+					projectsManager.setActiveProject(project.get());
+				} else {
+					return Either.left(Status.INVALID_ARGUMENT
+						.withDescription(String.format("Failed to set project at %s as the active project", request.getFileURL()))
+						.asRuntimeException());
+				}
+			}
+
+			return Either.right(Empty.newBuilder().build());
+		} catch (URISyntaxException ex) {
+			return Either.left(Status.INVALID_ARGUMENT
+				.withDescription(String.format("Invalid project URL %s", request.getFileURL()))
+				.asRuntimeException());
+		}
+	}
+
+	private Optional<Project> findProjectByURI(final URI projectURI) {
+		final ProjectsManager projectsManager = Application.getInstance().getProjectsManager();
+		for (Project p : projectsManager.getProjects()) {
+			ProjectDescriptor loadedDescriptor = ProjectDescriptorsFactory.getDescriptorForProject(p);
+			if (projectURI.equals(loadedDescriptor.getURI())) {
+				return Optional.of(p);
+			}
+		}
+		return Optional.absent();
+	}
+
+	@Override
+	public void closeProject(Empty request, StreamObserver<Empty> responseObserver) {
+		sendResponse(responseObserver, inProject()
+			.flatMapRight((project) -> {
+				Application.getInstance().getProjectsManager().closeProject(project);
+				return Either.right(Empty.newBuilder().build());
+			}));
+	}
+
+	@Override
+	public void saveProject(Empty request, StreamObserver<Empty> responseObserver) {
+		sendResponse(responseObserver, inProject()
+			.flatMapRight((project) -> {
+				ProjectDescriptor pd = ProjectDescriptorsFactory.getDescriptorForProject(project);
+				Application.getInstance().getProjectsManager().saveProject(pd, true);
+				return Either.right(Empty.newBuilder().build());
+			}));
 	}
 
 	private StatusRuntimeException exListNotModifiable(MDObject mdObject, EStructuralFeature eFeature) {

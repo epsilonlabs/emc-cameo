@@ -36,6 +36,7 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceConstants;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceGrpc;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceGrpc.ModelServiceBlockingStub;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.OpenSessionRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ProjectLocation;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.exceptions.models.EolEnumerationValueNotFoundException;
 import org.eclipse.epsilon.eol.exceptions.models.EolModelElementTypeNotFoundException;
@@ -60,6 +61,39 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.protobuf.ProtoUtils;
 
+/**
+ * <p>
+ * EMC driver for Cameo/MagicDraw models, using OpenAPI to connect with an
+ * instance of Cameo/MagicDraw running the plugin in this project.
+ * </p>
+ * 
+ * <p>
+ * This can be mostly used as any regular EMC {@link CachedModel}, but it has some quirks:
+ * </p>
+ * 
+ * <ul>
+ * <li>The driver assumes that the Cameo/MagicDraw plugin is going to be
+ * listening at
+ * {@link ModelServiceConstants#DEFAULT_HOST}:{@link ModelServiceconstants#DEFAULT_PORT}
+ * by default. If this is not the case, use {@link #setHost(String)} and
+ * {@link #setPort(int)} to the right values.</li>
+ * <li>If you want to ensure that a specific project is open, use
+ * {@link #setProjectURL(String)} to specify the URL to the {@code .mdzip} file.
+ * The driver will not do anything if the project is already loaded. If you do
+ * not set a project URL, the driver will assume that you have a project open
+ * already.</li>
+ * <li>Using {@link #setStoredOnDisposal(boolean)}, you can control whether the
+ * project will be saved when the model is disposed ({@code true}) or whether
+ * all changes will be rolled back ({@code false}). Saving is disabled by
+ * default.</li>
+ * <li>Using {@link #setClosedOnDisposal(boolean)}, you can also control whether
+ * the project should be automatically closed on disposal. This is disabled by
+ * default, as it is faster to leave the project open if you are going to
+ * interact repeatedly with it.</li>
+ * <li>You can use {@link #setRootElementHyperlink(String)} to limit the scope
+ * of the model to a specific package within the project.</li>
+ * </ul>
+ */
 public class MagicDrawModel extends CachedModel<MDModelElement> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(MagicDrawModel.class);
@@ -79,6 +113,8 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	private String host = ModelServiceConstants.DEFAULT_HOST;
 	private int port = ModelServiceConstants.DEFAULT_PORT;
 	private String rootElementHyperlink;
+	private String projectURL;
+	private boolean closedOnDisposal = false;
 
 	protected final ValueEncoder encoder = new ValueEncoder();
 
@@ -174,9 +210,28 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 		this.port = port;
 	}
 
+	public String getProjectURL() {
+		return projectURL;
+	}
+
+	public void setProjectURL(String projectURL) {
+		this.projectURL = projectURL;
+	}
+
+	public boolean isClosedOnDisposal() {
+		return closedOnDisposal;
+	}
+
+	public void setClosedOnDisposal(boolean newValue) {
+		this.closedOnDisposal = newValue;
+	}
+
 	@Override
 	public boolean store() {
+		// Confirm the opened session and save the project
 		sessionState.close();
+		client.saveProject(Empty.newBuilder().build());
+
 		return true;
 	}
 
@@ -187,6 +242,9 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 		client = ModelServiceGrpc.newBlockingStub(channel);
 		try {
 			client.ping(Empty.newBuilder().build());
+			if (projectURL != null) {
+				client.openProject(ProjectLocation.newBuilder().setFileURL(projectURL).build());
+			}
 		} catch (StatusRuntimeException ex) {
 			throw new EolModelLoadingException(ex, this);
 		}
@@ -365,6 +423,9 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	@Override
 	protected void disposeModel() {
 		sessionState.cancel();
+		if (isClosedOnDisposal()) {
+			client.closeProject(Empty.newBuilder().build());
+		}
 
 		if (channel != null) {
 			try {
