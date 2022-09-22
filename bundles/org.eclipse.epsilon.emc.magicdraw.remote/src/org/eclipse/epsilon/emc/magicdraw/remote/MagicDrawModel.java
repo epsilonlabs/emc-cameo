@@ -109,12 +109,14 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	public static final String PROPERTY_HOST = "server.host";
 	public static final String PROPERTY_PORT = "server.port";
 	public static final String PROPERTY_ROOT_HYPERLINK = "root.hyperlink";
+	public static final String PROPERTY_PROJECT_URL = "project.url";
+	public static final String PROPERTY_CLOSE_ON_DISPOSAL = "closeOnDisposal";
 
 	private String host = ModelServiceConstants.DEFAULT_HOST;
 	private int port = ModelServiceConstants.DEFAULT_PORT;
 	private String rootElementHyperlink;
 	private String projectURL;
-	private boolean closedOnDisposal = false;
+	private boolean closedOnDisposal;
 
 	protected final ValueEncoder encoder = new ValueEncoder();
 
@@ -242,7 +244,7 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 		client = ModelServiceGrpc.newBlockingStub(channel);
 		try {
 			client.ping(Empty.newBuilder().build());
-			if (projectURL != null) {
+			if (projectURL != null && projectURL.trim().length() > 0) {
 				client.openProject(ProjectLocation.newBuilder().setFileURL(projectURL).build());
 			}
 		} catch (StatusRuntimeException ex) {
@@ -260,6 +262,8 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 		setHost(properties.getProperty(PROPERTY_HOST, ModelServiceConstants.DEFAULT_HOST));
 		setPort(properties.getIntegerProperty(PROPERTY_PORT, ModelServiceConstants.DEFAULT_PORT));
 		setRootElementHyperlink(properties.getProperty(PROPERTY_ROOT_HYPERLINK));
+		setProjectURL(properties.getProperty(PROPERTY_PROJECT_URL));
+		setClosedOnDisposal(properties.getBooleanProperty(PROPERTY_CLOSE_ON_DISPOSAL, false));
 
 		load();
 	}

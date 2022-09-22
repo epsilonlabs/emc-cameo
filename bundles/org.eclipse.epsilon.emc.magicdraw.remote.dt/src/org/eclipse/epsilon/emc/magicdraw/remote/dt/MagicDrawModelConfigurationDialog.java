@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.epsilon.emc.magicdraw.remote.dt;
 
+import java.io.File;
+
 import org.eclipse.epsilon.common.dt.launching.dialogs.AbstractCachedModelConfigurationDialog;
 import org.eclipse.epsilon.common.dt.util.DialogUtil;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceConstants;
@@ -17,8 +19,12 @@ import org.eclipse.epsilon.emc.magicdraw.remote.MagicDrawModel;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
@@ -29,6 +35,9 @@ public class MagicDrawModelConfigurationDialog extends AbstractCachedModelConfig
 	private Text hostText;
 	private Text portText;
 	private Text rootHyperlinkText;
+
+	private Button closeOnDisposalCheck;
+	private Text projectURLText;
 
 	@Override
 	protected String getModelName() {
@@ -49,7 +58,30 @@ public class MagicDrawModelConfigurationDialog extends AbstractCachedModelConfig
 	}
 
 	private void createMDOptionsGroup(Composite parent) {
-		final Composite groupContent = DialogUtil.createGroupContainer(parent, "MagicDraw/Cameo Options", 2);
+		final Composite groupContent = DialogUtil.createGroupContainer(parent, "MagicDraw/Cameo Options", 3);
+
+		Label projectURLLabel = new Label(groupContent, SWT.NONE);
+		projectURLLabel.setText("Project URL:");
+
+		projectURLText = new Text(groupContent, SWT.BORDER);
+		projectURLText.setLayoutData(fillHorizontal());
+
+		Button projectURLBrowse = new Button(groupContent, SWT.NONE);
+		projectURLBrowse.setText("Browse...");
+		projectURLBrowse.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				FileDialog fileDialog = new FileDialog(parent.getShell());
+				fileDialog.setText("Select file");
+				fileDialog.setFilterExtensions(new String[] { "*.mdzip" });
+				fileDialog.setFilterNames(new String[] { "MagicDraw/Cameo projects (*.mdzip)" });
+
+				String selected = fileDialog.open();
+				if (selected != null) {
+					projectURLText.setText(new File(selected).toURI().toString());
+				}
+			}
+		});
 
 		Label rootHyperlinkLabel = new Label(groupContent, SWT.NONE);
 		rootHyperlinkLabel.setText("Root element hyperlink:");
@@ -58,10 +90,27 @@ public class MagicDrawModelConfigurationDialog extends AbstractCachedModelConfig
 				+ "on the element and selecting 'Copy Element Hyperlink'");
 
 		rootHyperlinkText = new Text(groupContent, SWT.BORDER);
-		rootHyperlinkText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		rootHyperlinkText.setLayoutData(fillHorizontal(2));
+
+		Label closeOnDisposalLabel = new Label(groupContent, SWT.NONE);
+		closeOnDisposalLabel.setText("Close on disposal:");
+		closeOnDisposalCheck = new Button(groupContent, SWT.CHECK);		
+		closeOnDisposalCheck.setLayoutData(fillHorizontal(2));		
 
 		groupContent.layout();
 		groupContent.pack();
+	}
+
+	private GridData fillHorizontal() {
+		return fillHorizontal(null);
+	}
+
+	private GridData fillHorizontal(Integer columns) {
+		GridData gd = new GridData(GridData.FILL_HORIZONTAL);
+		if (columns != null) {
+			gd.horizontalSpan = columns;
+		}
+		return gd;
 	}
 
 	private void createConnectionOptionsGroup(Composite parent) {
@@ -71,13 +120,13 @@ public class MagicDrawModelConfigurationDialog extends AbstractCachedModelConfig
 		hostLabel.setText("Host: ");
 
 		hostText = new Text(groupContent, SWT.BORDER);
-		hostText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		hostText.setLayoutData(fillHorizontal());
 
 		Label portLabel = new Label(groupContent, SWT.NONE);
 		portLabel.setText("Port: ");
 
 		portText = new Text(groupContent, SWT.BORDER);
-		portText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		portText.setLayoutData(fillHorizontal());
 		portText.addModifyListener(new ModifyListener() {
 			@Override
 			public void modifyText(ModifyEvent e) {
@@ -107,6 +156,8 @@ public class MagicDrawModelConfigurationDialog extends AbstractCachedModelConfig
 		hostText.setText(properties.getProperty(MagicDrawModel.PROPERTY_HOST, ModelServiceConstants.DEFAULT_HOST));
 		portText.setText(properties.getProperty(MagicDrawModel.PROPERTY_PORT, ModelServiceConstants.DEFAULT_PORT + ""));
 		rootHyperlinkText.setText(properties.getProperty(MagicDrawModel.PROPERTY_ROOT_HYPERLINK));
+		closeOnDisposalCheck.setSelection(properties.getBooleanProperty(MagicDrawModel.PROPERTY_CLOSE_ON_DISPOSAL, false));
+		projectURLText.setText(properties.getProperty(MagicDrawModel.PROPERTY_PROJECT_URL, ""));
 	}
 
 	@Override
@@ -116,6 +167,8 @@ public class MagicDrawModelConfigurationDialog extends AbstractCachedModelConfig
 		properties.put(MagicDrawModel.PROPERTY_HOST, hostText.getText());
 		properties.put(MagicDrawModel.PROPERTY_PORT, portText.getText());
 		properties.put(MagicDrawModel.PROPERTY_ROOT_HYPERLINK, rootHyperlinkText.getText());
+		properties.put(MagicDrawModel.PROPERTY_CLOSE_ON_DISPOSAL, closeOnDisposalCheck.getSelection());
+		properties.put(MagicDrawModel.PROPERTY_PROJECT_URL, projectURLText.getText());
 	}
 
 }
