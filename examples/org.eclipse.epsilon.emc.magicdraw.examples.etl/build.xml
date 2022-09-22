@@ -5,6 +5,7 @@
 	<target name="run-eclipse">
         <epsilon.emf.loadModel name="Tree" metamodelfile="Tree.ecore" modelfile="tree.model"/>
 		<epsilon.loadModel type="MagicDrawRemote" name="MagicDraw">
+			<!-- For the full list of available parameters, check the PROPERTY_* keys in MagicDrawModel and all its superclasses -->
 			<parameter name="storeOnDisposal" value="true"/>
 		</epsilon.loadModel>
 
@@ -39,6 +40,7 @@
 		
         <epsilon.emf.loadModel name="Tree" metamodelfile="Tree.ecore" modelfile="tree.model"/>
 		<epsilon.loadModel type="MagicDrawRemote" name="MagicDraw" impl="org.eclipse.epsilon.emc.magicdraw.remote.MagicDrawModel">
+			<!-- For the full list of available parameters, check the PROPERTY_* keys in MagicDrawModel and all its superclasses -->
 			<parameter name="storeOnDisposal" value="true"/>
 		</epsilon.loadModel>
 
