@@ -506,6 +506,16 @@ public class ZooModelTest {
 		m.setClosedOnDisposal(true);
 	}
 
+	@Test
+	public void eContainer() throws Exception {
+		EolModule module = createEOLModule();
+		
+		module.parse("return Class.all.selectOne(c|c.name = 'Animal').eContainer;");
+		MDModelElement elem = (MDModelElement) module.execute();
+		assertNotNull("The eContainer of the Animal class should be an object", elem);
+		assertEquals("The eContainer of the Animal class should be an uml::Model", "uml::Model", elem.getTypeName());
+	}
+
 	private void assumeTypeExists(String typeName) {
 		try {
 			m.getAllOfKind(typeName);

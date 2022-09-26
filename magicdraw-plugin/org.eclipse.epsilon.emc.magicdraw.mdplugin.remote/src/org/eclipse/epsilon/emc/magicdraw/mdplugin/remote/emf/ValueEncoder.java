@@ -77,7 +77,7 @@ public class ValueEncoder {
 		}
 	}
 
-	private void encodeReference(Value.Builder vBuilder, final Object rawValue) {
+	public void encodeReference(Value.Builder vBuilder, final Object rawValue) {
 		vBuilder.setReferenceValue(encode((MDObject) rawValue));
 	}
 

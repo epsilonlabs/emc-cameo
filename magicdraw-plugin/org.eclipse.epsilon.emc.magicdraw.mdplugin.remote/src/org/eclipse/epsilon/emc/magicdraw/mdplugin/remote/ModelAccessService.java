@@ -157,8 +157,19 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 				final Value.Builder vBuilder = Value.newBuilder();
 				final EStructuralFeature eFeature = mdObject.eClass()
 					.getEStructuralFeature(request.getFeatureName());
+
 				if (eFeature == null) {
-					vBuilder.setNotDefined(true);
+					// Might be one of the special cases
+					switch (request.getFeatureName()) {
+						case "eContainer": {
+							EObject eContainer = mdObject.eContainer();
+							encoder.encodeReference(vBuilder, eContainer);
+							break;
+						}
+						default:
+							vBuilder.setNotDefined(true);
+							break;
+					}
 				} else if (eFeature.isMany()) {
 					vBuilder.setProxyList(ProxyList.newBuilder()
 							.setElementID(mdObject.getID())
