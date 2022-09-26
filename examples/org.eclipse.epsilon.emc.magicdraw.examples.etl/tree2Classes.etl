@@ -5,6 +5,9 @@ rule Tree2Class
   c.name = t.label;
 
   if (t.parent.isDefined()) {
+    // Example of use of .eContainer as a generic container reference
+    t.eContainer.println('parent can also be accessed via eContainer: ');
+
     var g = new MagicDraw!Generalization;
     g.source.add(c);
     g.target.add(t.parent.equivalent());
