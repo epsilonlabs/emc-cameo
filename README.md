@@ -20,7 +20,7 @@ The gRPC server will shut down automatically when you close MagicDraw/Cameo.
 You can tell the driver to ensure a project is opened for you (using the `setProjectURL` method in `MagicDrawModel`), or you can open a project manually and let the driver access it.
 
 The driver can be used in several ways, as listed below.
-You may want to check the sample scripts to the [`examples`](examples) folder.
+You may want to check the sample scripts in the [`examples`](examples) folder.
 
 ### Configuring the server port
 
