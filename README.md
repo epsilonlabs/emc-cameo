@@ -11,12 +11,14 @@ For developer instructions, please check [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Installation and usage instructions
 
-Download the `cameo-mdplugin-*.zip` from the [latest release](https://github.com/epsilonlabs/emc-cameo/releases) of the plugin, and unzip it into your MagicDraw/Cameo `plugins` directory.
+Download `cameo-mdplugin-*.zip` from the [latest release](https://github.com/epsilonlabs/emc-cameo/releases) of the plugin.
+Unzip it into your MagicDraw/Cameo `plugins` directory.
 
-You can now start MagicDraw/Cameo as usual: upon startup, the plugin will start a gRPC server which will make your models accessible to the driver.
-For now, you will need to manually open the model you want to manipulate in MagicDraw in advance.
+Launch MagicDraw/Cameo as usual: upon startup, the plugin will start a gRPC server which will make your models accessible to the driver.
+The gRPC server will shut down automatically when you close MagicDraw/Cameo.
+You can tell the driver ensure a project is opened for you (using the `setProjectURL` method in `MagicDrawModel`), or you can open a project manually and let the driver access it.
 
-Once this is done, you can use the driver in several ways as listed below.
+The driver can be used in several ways, as listed below.
 You may want to check the sample scripts to the [`examples`](examples) folder.
 
 ### Configuring the server port
