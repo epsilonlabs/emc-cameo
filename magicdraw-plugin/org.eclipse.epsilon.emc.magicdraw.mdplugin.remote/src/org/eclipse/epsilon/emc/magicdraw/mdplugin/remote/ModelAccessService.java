@@ -153,7 +153,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	@Override
 	public void getFeatureValue(GetFeatureValueRequest request, StreamObserver<Value> responseObserver) {
 		sendResponse(responseObserver, inProject()
-			.flatMapRight((project) -> getElementByID(project, request.getElementID()))
+			.flatMapRight((project) -> getObjectByID(project, request.getElementID()))
 			.flatMapRight((mdObject) -> {
 				final Value.Builder vBuilder = Value.newBuilder();
 				final EStructuralFeature eFeature = mdObject.eClass()
@@ -274,12 +274,12 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	@Override
 	public void getElementByID(GetElementByIDRequest request, StreamObserver<ModelElement> responseObserver) {
 		sendResponse(responseObserver, inProject()
-			.flatMapRight((project) -> getElementByID(project, request.getElementID())
+			.flatMapRight((project) -> getObjectByID(project, request.getElementID())
 			.flatMapRight((mdObject) -> Either.right(encoder.encode(mdObject)))
 		));
 	}
 
-	private Either<StatusRuntimeException, EObject> getElementByID(Project project, final String id) {
+	private Either<StatusRuntimeException, EObject> getObjectByID(Project project, final String id) {
 		if (decoder.isResourceBasedID(id)) {
 			EObject eob = decoder.findByResourceBasedID(project, id);
 			if (eob == null) {
@@ -290,7 +290,10 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 				return Either.right(eob);
 			}
 		}
-		
+		return getMDObjectByID(project, id);
+	}
+
+	private Either<StatusRuntimeException, EObject> getMDObjectByID(Project project, final String id) {
 		final BaseElement element = project.getElementByID(id);
 		if (element == null) {
 			return Either.left(Status.INVALID_ARGUMENT
@@ -382,7 +385,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	public void deleteInstance(DeleteInstanceRequest request, StreamObserver<Empty> responseObserver) {
 		sendResponse(responseObserver, inProject()
 			.flatMapRight((project) -> inSession(project)
-			.flatMapRight((sessionManager) -> getElementByID(project, request.getElementID())
+			.flatMapRight((sessionManager) -> getMDObjectByID(project, request.getElementID())
 			.flatMapRight((mdObject) -> {
 				if (mdObject instanceof Element) {
 					try {
@@ -407,7 +410,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	public void setFeatureValue(SetFeatureValueRequest request, StreamObserver<Empty> responseObserver) {
 		sendResponse(responseObserver, inProject()
 			.flatMapRight((project) -> inSession(project)
-			.flatMapRight((sessionManager) -> getElementByID(project, request.getElementID())
+			.flatMapRight((sessionManager) -> getMDObjectByID(project, request.getElementID())
 			.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getFeatureName())
 			.flatMapRight((eFeature) -> {
 				Object decoded;
@@ -445,7 +448,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	@Override
 	public void listSize(ProxyList request, StreamObserver<SingleInteger> responseObserver) {
 		sendResponse(responseObserver, inProject()
-			.flatMapRight((project) -> getElementByID(project, request.getElementID())
+			.flatMapRight((project) -> getObjectByID(project, request.getElementID())
 			.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getFeatureName())
 			.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
 			.flatMapRight((eList) -> Either.right(SingleInteger.newBuilder().setValue(eList.size()).build())
@@ -455,7 +458,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	@Override
 	public void listGet(ListPosition request, StreamObserver<Value> responseObserver) {
 		sendResponse(responseObserver, inProject()
-			.flatMapRight((project) -> getElementByID(project, request.getList().getElementID())
+			.flatMapRight((project) -> getObjectByID(project, request.getList().getElementID())
 			.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getList().getFeatureName())
 			.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
 			.flatMapRight((eList) -> {
@@ -470,7 +473,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	public void listSet(ListPositionValue request, StreamObserver<Value> responseObserver) {
 		sendResponse(responseObserver, inProject()
 			.flatMapRight((project) -> inSession(project)
-			.flatMapRight((sm) -> getElementByID(project, request.getList().getElementID())
+			.flatMapRight((sm) -> getMDObjectByID(project, request.getList().getElementID())
 			.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getList().getFeatureName())
 			.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
 			.flatMapRight((eList) -> {
@@ -491,7 +494,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	public void listAdd(ListPositionValue request, StreamObserver<Empty> responseObserver) {
 		sendResponse(responseObserver, inProject()
 			.flatMapRight((project) -> inSession(project)
-			.flatMapRight((sm) -> getElementByID(project, request.getList().getElementID())
+			.flatMapRight((sm) -> getMDObjectByID(project, request.getList().getElementID())
 			.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getList().getFeatureName())
 			.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
 			.flatMapRight((eList) -> {
@@ -510,7 +513,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	public void listRemove(ListPosition request, StreamObserver<Value> responseObserver) {
 		sendResponse(responseObserver, inProject()
 			.flatMapRight((project) -> inSession(project)
-			.flatMapRight((sm) -> getElementByID(project, request.getList().getElementID())
+			.flatMapRight((sm) -> getMDObjectByID(project, request.getList().getElementID())
 			.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getList().getFeatureName())
 			.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
 			.flatMapRight((eList) -> {
@@ -530,7 +533,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	public void listMoveObject(ListPositionValue request, StreamObserver<Empty> responseObserver) {
 		sendResponse(responseObserver, inProject()
 				.flatMapRight((project) -> inSession(project)
-				.flatMapRight((sm) -> getElementByID(project, request.getList().getElementID())
+				.flatMapRight((sm) -> getMDObjectByID(project, request.getList().getElementID())
 				.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getList().getFeatureName())
 				.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
 				.flatMapRight((eList) -> {
@@ -549,7 +552,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	public void listClear(ProxyList request, StreamObserver<Empty> responseObserver) {
 		sendResponse(responseObserver, inProject()
 				.flatMapRight((project) -> inSession(project)
-				.flatMapRight((sm) -> getElementByID(project, request.getElementID())
+				.flatMapRight((sm) -> getMDObjectByID(project, request.getElementID())
 				.flatMapRight((mdObject) -> getEFeature(mdObject.eClass(), request.getFeatureName())
 				.flatMapRight((eFeature) -> getEList(mdObject, eFeature)
 				.flatMapRight((eList) -> {

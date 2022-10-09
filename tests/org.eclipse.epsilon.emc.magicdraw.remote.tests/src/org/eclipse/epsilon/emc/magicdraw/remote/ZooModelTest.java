@@ -15,6 +15,7 @@ import static org.hamcrest.core.StringStartsWith.startsWith;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeNoException;
 
@@ -23,6 +24,7 @@ import java.util.Collection;
 
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.eol.EolModule;
+import org.eclipse.epsilon.eol.exceptions.EolInternalException;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.exceptions.models.EolEnumerationValueNotFoundException;
 import org.eclipse.epsilon.eol.exceptions.models.EolModelElementTypeNotFoundException;
@@ -522,6 +524,13 @@ public class ZooModelTest {
 		module.parse("return Property.all.selectOne(c|c.name = 'dob').eContainingFeature.name;");
 		Object result = module.execute();
 		assertEquals("The name of the eContainingFeature of the Animal class should be an object", "ownedAttribute", result);
+	}
+
+	@Test
+	public void cannotSetNameOfFeature() throws Exception {
+		EolModule module = createEOLModule();
+		module.parse("Property.all.selectOne(c|c.name = 'dob').eContainingFeature.name = 'changed';");
+		assertThrows(EolInternalException.class, () -> module.execute());
 	}
 
 	private void assumeTypeExists(String typeName) {
