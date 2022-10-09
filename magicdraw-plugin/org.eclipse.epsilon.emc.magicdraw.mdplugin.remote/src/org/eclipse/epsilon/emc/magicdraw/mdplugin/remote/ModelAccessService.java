@@ -182,6 +182,13 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 							vBuilder.setReferenceValues(coll);
 							break;
 						}
+						case "eClass": {
+							EClass klass = mdObject.eClass();
+							if (klass != null) {
+								encoder.encodeReference(vBuilder, klass);
+							}
+							break;
+						}
 						default:
 							vBuilder.setNotDefined(true);
 							break;
