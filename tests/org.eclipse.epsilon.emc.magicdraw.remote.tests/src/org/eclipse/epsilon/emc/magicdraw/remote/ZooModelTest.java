@@ -516,6 +516,14 @@ public class ZooModelTest {
 		assertEquals("The eContainer of the Animal class should be an uml::Model", "uml::Model", elem.getTypeName());
 	}
 
+	@Test
+	public void eContainingFeature() throws Exception {
+		EolModule module = createEOLModule();
+		module.parse("return Property.all.selectOne(c|c.name = 'dob').eContainingFeature.name;");
+		Object result = module.execute();
+		assertEquals("The name of the eContainingFeature of the Animal class should be an object", "ownedAttribute", result);
+	}
+
 	private void assumeTypeExists(String typeName) {
 		try {
 			m.getAllOfKind(typeName);

@@ -6,7 +6,11 @@ package org.eclipse.epsilon.emc.magicdraw.modelapi;
 // Entity types
 
 message ModelElement {
+    // Note: elementIDs may be direct BaseElement IDs (for MDObject instances), or
+    // nsURI#fragment strings (for EObject instances related to the metamodel). This
+    // is the same across all APIs. The API will refuse to change non-MDObject instances.
     string elementID = 1;
+
     string metamodelUri = 2;
     string typeName = 3;
 }

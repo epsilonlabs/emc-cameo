@@ -22,6 +22,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.eclipse.emf.common.util.EList;
+import org.eclipse.emf.common.util.Enumerator;
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EClassifier;
@@ -166,13 +167,20 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 							encoder.encodeReference(vBuilder, eContainer);
 							break;
 						}
+						case "eContainingFeature": {
+							EStructuralFeature feature = mdObject.eContainingFeature();
+							if (feature != null) {
+								encoder.encodeReference(vBuilder, feature);
+							}
+							break;
+						}
 						default:
 							vBuilder.setNotDefined(true);
 							break;
 					}
 				} else if (eFeature.isMany()) {
 					vBuilder.setProxyList(ProxyList.newBuilder()
-							.setElementID(mdObject.getID())
+							.setElementID(encoder.encodeID(mdObject))
 							.setFeatureName(eFeature.getName()));
 				} else {
 					Object rawValue = mdObject.eGet(eFeature);
@@ -258,7 +266,7 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 						.withDescription(String.format("Could not find enumeration value '%s' in '%s'", request.getLabel(), request.getEnumeration()))
 						.asRuntimeException());
 				} else {
-					return Either.right(encoder.encode(literal));
+					return Either.right(encoder.encode((Enumerator) literal));
 				}
 			}));
 	}
@@ -271,7 +279,18 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		));
 	}
 
-	private Either<StatusRuntimeException, MDObject> getElementByID(Project project, final String id) {
+	private Either<StatusRuntimeException, EObject> getElementByID(Project project, final String id) {
+		if (decoder.isResourceBasedID(id)) {
+			EObject eob = decoder.findByResourceBasedID(project, id);
+			if (eob == null) {
+				return Either.left(Status.INVALID_ARGUMENT
+					.withDescription(String.format("Could not find metamodel element with ID %s", id))
+					.asRuntimeException());
+			} else {
+				return Either.right(eob);
+			}
+		}
+		
 		final BaseElement element = project.getElementByID(id);
 		if (element == null) {
 			return Either.left(Status.INVALID_ARGUMENT
@@ -610,14 +629,14 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 			}));
 	}
 
-	private StatusRuntimeException exListNotModifiable(MDObject mdObject, EStructuralFeature eFeature) {
+	private StatusRuntimeException exListNotModifiable(EObject mdObject, EStructuralFeature eFeature) {
 		return Status.INVALID_ARGUMENT
 			.withDescription(String.format("Feature %s in %s is not a modifiable list: it may be a derived feature", eFeature.getName(), getFullyQualifiedName(mdObject.eClass())))
 			.asRuntimeException();
 	}
 
 	@SuppressWarnings("unchecked")
-	private Either<StatusRuntimeException, EList<Object>> getEList(MDObject mdObject, EStructuralFeature eFeature) {
+	private Either<StatusRuntimeException, EList<Object>> getEList(EObject mdObject, EStructuralFeature eFeature) {
 		if (!eFeature.isMany()) {
 			return Either.left(Status.INVALID_ARGUMENT
 				.withDescription(String.format("Feature %s in %s is not many-valued", eFeature.getName(), getFullyQualifiedName(mdObject.eClass())))

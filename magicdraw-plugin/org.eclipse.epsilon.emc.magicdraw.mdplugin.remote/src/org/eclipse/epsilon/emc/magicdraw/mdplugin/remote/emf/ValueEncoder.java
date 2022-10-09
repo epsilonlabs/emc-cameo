@@ -20,6 +20,7 @@ import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EStructuralFeature;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.EnumerationValue;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
@@ -37,11 +38,11 @@ public class ValueEncoder {
 	 * Encodes a single value for a given feature. For many-valued features,
 	 * it assumes that the {@code rawValue} is an element of the list.
 	 */
-	public void encode(final MDObject mdObject, final EStructuralFeature eFeature, Value.Builder vBuilder, final Object rawValue) {
+	public void encode(final EObject mdObject, final EStructuralFeature eFeature, Value.Builder vBuilder, final Object rawValue) {
 		if (eFeature instanceof EAttribute) {
 			encodeScalarAttribute(vBuilder, rawValue);
 		} else {
-			encodeReference(vBuilder, rawValue);
+			encodeReference(vBuilder, (EObject) rawValue);
 		}
 	}
 
@@ -77,15 +78,26 @@ public class ValueEncoder {
 		}
 	}
 
-	public void encodeReference(Value.Builder vBuilder, final Object rawValue) {
-		vBuilder.setReferenceValue(encode((MDObject) rawValue));
+	public void encodeReference(Value.Builder vBuilder, final EObject rawValue) {
+		vBuilder.setReferenceValue(encode(rawValue));
 	}
 
-	public ModelElement encode(MDObject eob) {
-		return ModelElement.newBuilder().setElementID(eob.getID())
+	public ModelElement encode(EObject eob) {
+		return ModelElement.newBuilder().setElementID(encodeID(eob))
 			.setMetamodelUri(eob.eClass().getEPackage().getNsURI())
 			.setTypeName(getFullyQualifiedName(eob.eClass()))
 			.build();
+	}
+
+	public String encodeID(EObject eob) {
+		if (eob instanceof MDObject) {
+			return ((MDObject) eob).getID();
+		} else {
+			/* For non-MDObject instances (e.g. the .eClass / .eContainingFeature), we
+			 * take advantage of the fact that the resource URI matches the EPackage URI. */
+			final Resource eResource = eob.eResource();
+			return String.format("%s#%s", eob.eResource().getURI(), eResource.getURIFragment(eob));
+		}
 	}
 
 	public ModelElementCollection encodeAllOf(EClassifier eClassifier, EObject root, final boolean onlyExactType) {

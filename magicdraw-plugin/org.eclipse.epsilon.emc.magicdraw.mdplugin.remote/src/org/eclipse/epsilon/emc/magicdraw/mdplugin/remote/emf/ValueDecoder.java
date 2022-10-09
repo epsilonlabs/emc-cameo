@@ -10,10 +10,13 @@
  *******************************************************************************/
 package org.eclipse.epsilon.emc.magicdraw.mdplugin.remote.emf;
 
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import org.eclipse.emf.ecore.EDataType;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EPackage.Registry;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.EnumerationValue;
@@ -93,4 +96,22 @@ public class ValueDecoder {
 		return project.getElementByID(elem.getElementID());
 	}
 
+	public boolean isResourceBasedID(String id) {
+		return id.contains("#");
+	}
+
+	public EObject findByResourceBasedID(Project project, String id) {
+		String[] parts = id.split("#", 2);
+		if (parts.length != 2) {
+			throw new IllegalArgumentException(String.format("Could not split '%s' into 2 using separator #", id));
+		}
+
+		Registry registry = project.getPrimaryModel().eResource().getResourceSet().getPackageRegistry();
+		EPackage pkg = registry.getEPackage(parts[0]);
+		if (pkg == null) {
+			throw new NoSuchElementException(String.format("Could not find metamodel '%s' in the package registry", parts[0]));
+		}
+
+		return pkg.eResource().getEObject(parts[1]);
+	}
 }
