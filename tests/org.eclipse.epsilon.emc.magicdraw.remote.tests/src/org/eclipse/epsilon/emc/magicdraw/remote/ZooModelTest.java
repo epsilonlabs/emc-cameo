@@ -533,6 +533,14 @@ public class ZooModelTest {
 		assertThrows(EolInternalException.class, () -> module.execute());
 	}
 
+	@Test
+	public void eContents() throws Exception {
+		EolModule module = createEOLModule();
+		
+		module.parse("return Class.all.selectOne(c|c.name = 'Animal').eContents.size;");
+		assertEquals("The size of the contents of the Animal class should be 5", 5, module.execute());
+	}
+
 	private void assumeTypeExists(String typeName) {
 		try {
 			m.getAllOfKind(typeName);

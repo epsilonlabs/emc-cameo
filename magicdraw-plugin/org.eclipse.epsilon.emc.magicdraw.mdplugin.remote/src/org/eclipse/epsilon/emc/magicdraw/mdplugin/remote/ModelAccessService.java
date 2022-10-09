@@ -174,6 +174,14 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 							}
 							break;
 						}
+						case "eContents": {
+							ModelElementCollection.Builder coll = ModelElementCollection.newBuilder();
+							for (EObject child : mdObject.eContents()) {
+								coll.addValues(encoder.encode(child));
+							}
+							vBuilder.setReferenceValues(coll);
+							break;
+						}
 						default:
 							vBuilder.setNotDefined(true);
 							break;

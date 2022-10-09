@@ -10,7 +10,11 @@
  *******************************************************************************/
 package org.eclipse.epsilon.emc.magicdraw.remote;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.epsilon.emc.magicdraw.modelapi.GetFeatureValueRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElement;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Value;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.Value.ValueCase;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
@@ -64,10 +68,18 @@ public class MagicDrawPropertyGetter extends JavaPropertyGetter {
 		case SHORTVALUES:
 		case BYTEVALUES:
 		case STRINGVALUES:
-		case REFERENCEVALUES:
 		case ENUMERATIONVALUES:
 			throw new IllegalArgumentException("Server should only send proxy lists for many-valued features");
 
+		case REFERENCEVALUES: {
+			// NOTE: should be used solely for .eContents and read-only lists - modifiable many-valued features should use proxy lists
+			List<MDModelElement> elems = new ArrayList<>(response.getReferenceValues().getValuesCount());
+			for (ModelElement e : response.getReferenceValues().getValuesList()) {
+				elems.add(new MDModelElement(model, e));
+			}
+			return elems;
+		}
+			
 		case PROXYLIST: return new MDProxyList(model, response.getProxyList());
 
 		case NOTDEFINED:
