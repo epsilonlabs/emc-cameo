@@ -537,6 +537,11 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 					return Either.right(Empty.newBuilder().build());
 				} catch (UnsupportedOperationException ex) {
 					return Either.left(exListNotModifiable(mdObject, eFeature));
+				} catch (ArrayStoreException ex) {
+					return Either.left(Status.INVALID_ARGUMENT
+						.withDescription(String.format("Cannot add a %s to feature %s of a %s",
+							newValue == null ? "null" : newValue.getClass().getName(), eFeature.getName(), getFullyQualifiedName(mdObject.eClass())))
+						.asRuntimeException());
 				}
 			})))
 		)));
