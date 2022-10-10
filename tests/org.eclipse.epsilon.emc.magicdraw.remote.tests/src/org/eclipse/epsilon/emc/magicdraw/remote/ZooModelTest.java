@@ -352,7 +352,7 @@ public class ZooModelTest {
 	}
 
 	@Test
-	public void addListElement() throws Exception {
+	public void addListElementAtZero() throws Exception {
 		EolModule module = createEOLModule();
 		module.parse("var lion = Class.all.selectOne(c|c.name='Lion'); "
 				+ "var p = new Property; "
@@ -365,6 +365,20 @@ public class ZooModelTest {
 		assertEquals("'maneColour' should be the new first property of Lion", "maneColour", module.execute());
 	}
 
+	@Test
+	public void addListElementAtEnd() throws Exception {
+		EolModule module = createEOLModule();
+		module.parse("var lion = Class.all.selectOne(c|c.name='Lion'); "
+				+ "var p = new Property; "
+				+ "p.name = 'maneColour'; "
+				+ "lion.ownedAttribute.add(p); "
+		);
+		module.execute();
+
+		module.parse("return Class.all.selectOne(c | c.name = 'Lion').ownedAttribute.first.name;");
+		assertEquals("'maneColour' should be the new first property of Lion", "maneColour", module.execute());
+	}
+	
 	@Test
 	public void removeListElement() throws Exception {
 		EolModule module = createEOLModule();
