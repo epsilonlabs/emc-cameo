@@ -72,8 +72,11 @@ import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.magicdraw.uml.Finder;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageableElement;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Profile;
+import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
 import com.nomagic.uml2.impl.ElementsFactory;
 
 import io.grpc.Metadata;
@@ -126,9 +129,19 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	@Override
 	public void allOf(AllOfRequest request, StreamObserver<ModelElementCollection> responseObserver) {
 		sendResponse(responseObserver, inProject().flatMapRight((project) ->
-			findEClassifier(request.getTypeName()).flatMapRight((eClassifier) ->
-				findRootElement(request.getRootElementHyperlink(), project).flatMapRight((root) ->
-					Either.right(encoder.encodeAllOf(eClassifier, root, request.getOnlyExactType()))))));
+			findEClassifier(request.getTypeName()).flatMapRight((eClassifier) -> {
+				if (eClassifier != null && "Profile".equals(eClassifier.getName()) && UMLPackage.eNS_URI.equals(eClassifier.getEPackage().getNsURI())) {
+					// SPECIAL CASE: use the StereotypeHelper to find profiles
+					final ModelElementCollection.Builder builder = ModelElementCollection.newBuilder();
+					for (Profile profile : StereotypesHelper.getAllProfiles(project)) {
+						builder.addValues(encoder.encode(profile));
+					}
+					return Either.right(builder.build());
+				}
+
+				return findRootElement(request.getRootElementHyperlink(), project)
+					.flatMapRight((root) -> Either.right(encoder.encodeAllOf(eClassifier, root, request.getOnlyExactType())));
+		})));
 	}
 
 	private Either<StatusRuntimeException, EObject> findRootElement(String rootElementHyperlink, Project project) {

@@ -561,6 +561,17 @@ public class ZooModelTest {
 		assertEquals("Class", module.execute());
 	}
 
+	@Test
+	public void applyPredefinedStereotype() throws Exception {
+		EolModule module = createEOLModule();
+		module.parse("var stdProfile = Profile.all.selectOne(p|p.URI = 'http://www.omg.org/spec/UML/20131001/StandardProfile'); "
+			+ "var auxStereotype = stdProfile.ownedStereotype.selectOne(s|s.name = 'Auxiliary');"
+			+ "var lionClass = Class.all.selectOne(c|c.name = 'Lion');"
+			+ "lionClass.appliedStereotype.add(auxStereotype);"
+			+ "return lionClass.appliedStereotype.size;");
+		assertEquals(1, module.execute());
+	}
+
 	private void assumeTypeExists(String typeName) {
 		try {
 			m.getAllOfKind(typeName);
