@@ -58,6 +58,19 @@ public class MDProxyList extends AbstractList<Object> {
 	}
 
 	@Override
+	public boolean add(Object element) {
+		model.ensureSessionOpened();
+		Value value = model.encoder.encode(element);
+
+		// Do not specify an insertion position: the server will implicitly add it at the end.
+		// This avoids having a useless call to size() every time we add at the end.
+		model.client.listAdd(ListPositionValue.newBuilder().setList(proxyList).setValue(value).build());
+
+		// NOTE: cannot support boolean return currently, would need to add specific API for add-at-end
+		return true;
+	}
+
+	@Override
 	public Object remove(int index) {
 		model.ensureSessionOpened();
 		Value oldValue = model.client.listRemove(createListPosition(index));

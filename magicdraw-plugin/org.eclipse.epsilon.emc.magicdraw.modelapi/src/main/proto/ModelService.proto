@@ -176,7 +176,10 @@ message ListPosition {
 
 message ListPositionValue {
     ProxyList list = 1;
-    uint32 position = 2;
+
+    // NOTE: if omitted during an addition, will add to the end
+    optional uint32 position = 2;
+
     Value value = 3;
 }
 

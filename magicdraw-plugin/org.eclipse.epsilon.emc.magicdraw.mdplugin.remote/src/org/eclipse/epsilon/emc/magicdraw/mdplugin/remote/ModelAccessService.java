@@ -515,7 +515,12 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 			.flatMapRight((eList) -> {
 				Object newValue = decoder.decode(project, eFeature, request.getValue());
 				try {
-					eList.add(request.getPosition(), newValue);
+					if (request.hasPosition()) {
+						eList.add(request.getPosition(), newValue);
+					} else {
+						eList.add(newValue);
+					}
+
 					return Either.right(Empty.newBuilder().build());
 				} catch (UnsupportedOperationException ex) {
 					return Either.left(exListNotModifiable(mdObject, eFeature));
