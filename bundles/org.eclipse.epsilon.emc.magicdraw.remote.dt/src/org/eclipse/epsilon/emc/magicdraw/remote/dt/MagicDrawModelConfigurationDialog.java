@@ -121,12 +121,14 @@ public class MagicDrawModelConfigurationDialog extends AbstractCachedModelConfig
 
 		hostText = new Text(groupContent, SWT.BORDER);
 		hostText.setLayoutData(fillHorizontal());
+		hostText.setText(ModelServiceConstants.DEFAULT_HOST);
 
 		Label portLabel = new Label(groupContent, SWT.NONE);
 		portLabel.setText("Port: ");
 
 		portText = new Text(groupContent, SWT.BORDER);
 		portText.setLayoutData(fillHorizontal());
+		portText.setText(ModelServiceConstants.DEFAULT_PORT + "");
 		portText.addModifyListener(new ModifyListener() {
 			@Override
 			public void modifyText(ModifyEvent e) {
