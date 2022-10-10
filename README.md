@@ -20,7 +20,11 @@ The gRPC server will shut down automatically when you close MagicDraw/Cameo.
 You can tell the driver to ensure a project is opened for you (using the `setProjectURL` method in `MagicDrawModel`), or you can open a project manually and let the driver access it.
 
 The driver can be used in several ways, as listed below.
-You may want to check the sample scripts in the [`examples`](examples) folder.
+You may want to check the sample scripts in the [`examples`](examples) folder:
+
+* [Adding a predefined stereotype to a class](examples/org.eclipse.epsilon.emc.magicdraw.examples.eol/addPredefinedStereotype.eol)
+* [Creating a new stereotype and adding it to a class](examples/org.eclipse.epsilon.emc.magicdraw.examples.eol/addCustomStereotype.eol)
+* [Transforming a Tree EMF model to a set of classes](examples/org.eclipse.epsilon.emc.magicdraw.examples.etl/tree2Classes.etl)
 
 ### Configuring the server port
 
