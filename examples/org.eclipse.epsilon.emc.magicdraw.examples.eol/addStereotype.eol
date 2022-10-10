@@ -1,0 +1,8 @@
+var cLion = Class.all.selectOne(c|c.name = 'Lion');
+
+var stereoNew = Stereotype.all.selectOne(s|s.name = 'something');
+if (stereoNew.isUndefined()) {
+  stereoNew = new Stereotype;
+  stereoNew.name = 'something';
+}
+cLion.appliedStereotype.add(stereoNew);
