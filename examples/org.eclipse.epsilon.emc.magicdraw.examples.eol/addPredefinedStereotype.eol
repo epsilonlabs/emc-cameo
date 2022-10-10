@@ -1,0 +1,6 @@
+var stdProfile = Profile.all.selectOne(p|p.URI = 'http://www.omg.org/spec/UML/20131001/StandardProfile');
+var auxStereotype = stdProfile.ownedStereotype.selectOne(s|s.name = 'Auxiliary');
+auxStereotype.println('Auxiliary stereotype: ');
+
+var lionClass = Class.all.selectOne(c|c.name = 'Lion');
+lionClass.appliedStereotype.add(auxStereotype);
