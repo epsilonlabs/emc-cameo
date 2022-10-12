@@ -37,6 +37,7 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceGrpc;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceGrpc.ModelServiceBlockingStub;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.OpenSessionRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ProfileRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ProfileStereotypeRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ProjectLocation;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.exceptions.models.EolEnumerationValueNotFoundException;
@@ -245,6 +246,16 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 	public MDModelElement getProfile(String uri) {
 		ModelElement profile = client.getProfile(ProfileRequest.newBuilder().setUri(uri).build());
 		return new MDModelElement(this, profile);
+	}
+
+	/**
+	 * Returns the Stereotype object for a given profile URI and stereotype name, anywhere in the project, and including sub-profiles of the given profile.
+	 */
+	public MDModelElement getStereotype(String profileURI, String stereotypeName) {
+		ModelElement stereotype = client.getStereotype(ProfileStereotypeRequest.newBuilder()
+			.setProfileURI(profileURI)
+			.setStereotypeName(stereotypeName).build());
+		return new MDModelElement(this, stereotype);
 	}
 
 	@Override

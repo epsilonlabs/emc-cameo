@@ -347,13 +347,41 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 			.flatMapRight((project) -> {
 				Profile profile = StereotypesHelper.getProfileByURI(project, request.getUri());
 				if (profile == null) {
-					return Either.left(Status.INVALID_ARGUMENT
-						.withDescription(String.format("Cannot find profile with URI '%s'", request.getUri()))
-						.asRuntimeException());
+					return Either.left(exProfileNotFound(request.getUri()));
 				} else {
 					return Either.right(encoder.encode(profile));
 				}
 			}));
+	}
+
+	private StatusRuntimeException exProfileNotFound(String uri) {
+		return Status.INVALID_ARGUMENT
+			.withDescription(String.format("Cannot find profile with URI '%s'", uri))
+			.asRuntimeException();
+	}
+
+	@Override
+	public void getStereotype(ProfileStereotypeRequest request, StreamObserver<ModelElement> responseObserver) {
+		sendResponse(responseObserver, inProject()
+			.flatMapRight((project) -> {
+				Profile profile = StereotypesHelper.getProfileByURI(project, request.getProfileURI());
+				if (profile == null) {
+					return Either.left(exProfileNotFound(request.getProfileURI()));
+				}
+
+				Stereotype stereotype = StereotypesHelper.getStereotype(project, request.getStereotypeName(), profile);
+				if (stereotype == null) {
+					return Either.left(Status.INVALID_ARGUMENT
+						.withDescription(String.format(
+								"Cannot find stereotype '%s' in profile with URI '%s' or its sub-profiles",
+								request.getStereotypeName(),
+								request.getProfileURI()))
+						.asRuntimeException());
+				}
+
+				return Either.right(encoder.encode(stereotype));
+			})
+		);
 	}
 
 	@Override

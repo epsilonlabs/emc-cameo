@@ -192,6 +192,11 @@ message ProfileRequest {
     string uri = 1;
 }
 
+message ProfileStereotypeRequest {
+    string profileURI = 1;
+    string stereotypeName = 2;
+}
+
 // Main service
 
 service ModelService {
@@ -208,6 +213,7 @@ service ModelService {
     // profile API
     rpc getProfiles(Empty) returns (ModelElementCollection);
     rpc getProfile(ProfileRequest) returns (ModelElement);
+    rpc getStereotype(ProfileStereotypeRequest) returns (ModelElement);
 
     // session API
     rpc openSession(OpenSessionRequest) returns (Empty);

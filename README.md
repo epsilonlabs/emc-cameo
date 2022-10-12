@@ -90,6 +90,7 @@ To access UML profiles and stereotypes, it's best to use these methods (assuming
 
 * `Model.getProfiles()`: returns all the `Profile`s available in your project.
 * `Model.getProfile(uri)`: returns the `Profile` with the given URI in your project.
+* `Model.getStereotype(uri, name)`: returns the `Stereotype` within the profile with the given URI and name. Looks inside sub-profiles.
 
 These are better than using `Profile.all`, which is limited to the `Profile` objects inside your primary model (or the package specified by your root element hyperlink, if set).
 
