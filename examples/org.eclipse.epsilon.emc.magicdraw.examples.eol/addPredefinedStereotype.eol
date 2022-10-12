@@ -1,6 +1,6 @@
-var stdProfile = Profile.all.selectOne(p|p.URI = 'http://www.omg.org/spec/UML/20131001/StandardProfile');
-var auxStereotype = stdProfile.ownedStereotype.selectOne(s|s.name = 'Auxiliary');
-auxStereotype.println('Auxiliary stereotype: ');
-
+var auxStereotype = Model.getStereotype('http://www.omg.org/spec/UML/20131001/StandardProfile', 'Auxiliary');
 var lionClass = Class.all.selectOne(c|c.name = 'Lion');
+
+// NOTE: only works in Cameo 2021x / MagicDraw 2021x.
+// Cameo 19.0 SP4 does not have Class.appliedStereotype in its UML metamodel. 
 lionClass.appliedStereotype.add(auxStereotype);
