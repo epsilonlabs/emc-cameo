@@ -28,3 +28,6 @@ target-plain/
 
 # MagicDraw backups
 *.mdzip.bak
+
+# Notepad++
+*.bak

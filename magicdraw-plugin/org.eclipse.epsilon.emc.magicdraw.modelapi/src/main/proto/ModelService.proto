@@ -188,6 +188,10 @@ message ProjectLocation {
     string fileURL = 1;
 }
 
+message ProfileRequest {
+    string uri = 1;
+}
+
 // Main service
 
 service ModelService {
@@ -200,6 +204,10 @@ service ModelService {
     rpc getEnumerationValue(GetEnumerationValueRequest) returns (EnumerationValue);
     rpc getFeatureValue(GetFeatureValueRequest) returns (Value);
     rpc getType(GetTypeRequest) returns (ModelElementType);
+
+    // profile API
+    rpc getProfiles(Empty) returns (ModelElementCollection);
+    rpc getProfile(ProfileRequest) returns (ModelElement);
 
     // session API
     rpc openSession(OpenSessionRequest) returns (Empty);

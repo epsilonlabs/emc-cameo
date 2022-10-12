@@ -36,6 +36,7 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceConstants;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceGrpc;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceGrpc.ModelServiceBlockingStub;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.OpenSessionRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ProfileRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ProjectLocation;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.exceptions.models.EolEnumerationValueNotFoundException;
@@ -226,6 +227,24 @@ public class MagicDrawModel extends CachedModel<MDModelElement> {
 
 	public void setClosedOnDisposal(boolean newValue) {
 		this.closedOnDisposal = newValue;
+	}
+
+	/**
+	 * Returns the list of all the Profile objects available in the project (whether in the primary model or not).
+	 */
+	public List<MDModelElement> getProfiles() {
+		ModelElementCollection profiles = client.getProfiles(Empty.newBuilder().build());
+		return profiles.getValuesList().stream()
+			.map(e -> new MDModelElement(this, e))
+			.collect(Collectors.toList());
+	}
+
+	/**
+	 * Returns the Profile object for a given URI, anywhere in the project (whether in the primary model or not).
+	 */
+	public MDModelElement getProfile(String uri) {
+		ModelElement profile = client.getProfile(ProfileRequest.newBuilder().setUri(uri).build());
+		return new MDModelElement(this, profile);
 	}
 
 	@Override

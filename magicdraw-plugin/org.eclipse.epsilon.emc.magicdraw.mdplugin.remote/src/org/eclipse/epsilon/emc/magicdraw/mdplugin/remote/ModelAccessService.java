@@ -51,6 +51,7 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelElementTypeReference;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceConstants;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceGrpc;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.OpenSessionRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ProfileRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ProjectLocation;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ProxyList;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.SetFeatureValueRequest;
@@ -76,7 +77,6 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageableElement;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Profile;
-import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
 import com.nomagic.uml2.impl.ElementsFactory;
 
 import io.grpc.Metadata;
@@ -129,19 +129,10 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 	@Override
 	public void allOf(AllOfRequest request, StreamObserver<ModelElementCollection> responseObserver) {
 		sendResponse(responseObserver, inProject().flatMapRight((project) ->
-			findEClassifier(request.getTypeName()).flatMapRight((eClassifier) -> {
-				if (eClassifier != null && "Profile".equals(eClassifier.getName()) && UMLPackage.eNS_URI.equals(eClassifier.getEPackage().getNsURI())) {
-					// SPECIAL CASE: use the StereotypeHelper to find profiles
-					final ModelElementCollection.Builder builder = ModelElementCollection.newBuilder();
-					for (Profile profile : StereotypesHelper.getAllProfiles(project)) {
-						builder.addValues(encoder.encode(profile));
-					}
-					return Either.right(builder.build());
-				}
-
-				return findRootElement(request.getRootElementHyperlink(), project)
-					.flatMapRight((root) -> Either.right(encoder.encodeAllOf(eClassifier, root, request.getOnlyExactType())));
-		})));
+			findEClassifier(request.getTypeName()).flatMapRight((eClassifier) ->
+			findRootElement(request.getRootElementHyperlink(), project).flatMapRight((root) ->
+				Either.right(encoder.encodeAllOf(eClassifier, root, request.getOnlyExactType())))
+		)));
 	}
 
 	private Either<StatusRuntimeException, EObject> findRootElement(String rootElementHyperlink, Project project) {
@@ -334,6 +325,35 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		} else {
 			return Either.right((MDObject) element);
 		}
+	}
+
+	@Override
+	public void getProfiles(Empty request, StreamObserver<ModelElementCollection> responseObserver) {
+		sendResponse(responseObserver, inProject()
+			.flatMapRight((project) -> {
+				Collection<Profile> profiles = StereotypesHelper.getAllProfiles(project);
+
+				ModelElementCollection.Builder cBuilder = ModelElementCollection.newBuilder();
+				for (Profile profile : profiles) {
+					cBuilder.addValues(encoder.encode(profile));
+				}
+				return Either.right(cBuilder.build());
+		}));
+	}
+
+	@Override
+	public void getProfile(ProfileRequest request, StreamObserver<ModelElement> responseObserver) {
+		sendResponse(responseObserver, inProject()
+			.flatMapRight((project) -> {
+				Profile profile = StereotypesHelper.getProfileByURI(project, request.getUri());
+				if (profile == null) {
+					return Either.left(Status.INVALID_ARGUMENT
+						.withDescription(String.format("Cannot find profile with URI '%s'", request.getUri()))
+						.asRuntimeException());
+				} else {
+					return Either.right(encoder.encode(profile));
+				}
+			}));
 	}
 
 	@Override

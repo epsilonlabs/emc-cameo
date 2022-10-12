@@ -84,6 +84,15 @@ Once you have set up your authentication to Github Packages, you can access them
 
 Note that if you are using the repository from the Maven `antrun` plugin, it will need to be a `<pluginRepository>` element instead.
 
+## Accessing profiles
+
+To access UML profiles and stereotypes, it's best to use these methods (assuming that your model is called `Model`):
+
+* `Model.getProfiles()`: returns all the `Profile`s available in your project.
+* `Model.getProfile(uri)`: returns the `Profile` with the given URI in your project.
+
+These are better than using `Profile.all`, which is limited to the `Profile` objects inside your primary model (or the package specified by your root element hyperlink, if set).
+
 ## Other resources
 
 * [Blog post on using Xtend from a Cameo/MagicDraw plugin](https://blogs.itemis.com/en/model-transformations-for-mbse-with-cameo-and-xtend)

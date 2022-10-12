@@ -564,12 +564,19 @@ public class ZooModelTest {
 	@Test
 	public void applyPredefinedStereotype() throws Exception {
 		EolModule module = createEOLModule();
-		module.parse("var stdProfile = Profile.all.selectOne(p|p.URI = 'http://www.omg.org/spec/UML/20131001/StandardProfile'); "
+		module.parse("var stdProfile = Model.getProfile('http://www.omg.org/spec/UML/20131001/StandardProfile'); "
 			+ "var auxStereotype = stdProfile.ownedStereotype.selectOne(s|s.name = 'Auxiliary');"
 			+ "var lionClass = Class.all.selectOne(c|c.name = 'Lion');"
 			+ "lionClass.appliedStereotype.add(auxStereotype);"
 			+ "return lionClass.appliedStereotype.size;");
 		assertEquals(1, module.execute());
+	}
+
+	@Test
+	public void allProfiles() throws Exception {
+		EolModule module = createEOLModule();
+		module.parse("return Model.getProfiles().size;");
+		assertTrue("There should be at least one predefined profile", (int) module.execute() > 1);
 	}
 
 	private void assumeTypeExists(String typeName) {
@@ -597,6 +604,7 @@ public class ZooModelTest {
 	@Before
 	public void createZooModel() throws EolModelLoadingException {
 		m = new MagicDrawModel();
+		m.setName("Model");
 
 		m.setProjectURL(new File("resources/example-zoo.mdzip").getAbsoluteFile().toURI().toString());
 		m.setReadOnLoad(true);
