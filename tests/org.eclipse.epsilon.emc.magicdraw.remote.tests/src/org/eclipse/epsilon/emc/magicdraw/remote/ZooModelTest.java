@@ -562,14 +562,17 @@ public class ZooModelTest {
 	}
 
 	@Test
-	public void applyPredefinedStereotype() throws Exception {
+	public void getPredefinedProfile() throws Exception {
 		EolModule module = createEOLModule();
-		module.parse("var stdProfile = Model.getProfile('http://www.omg.org/spec/UML/20131001/StandardProfile'); "
-			+ "var auxStereotype = stdProfile.ownedStereotype.selectOne(s|s.name = 'Auxiliary');"
-			+ "var lionClass = Class.all.selectOne(c|c.name = 'Lion');"
-			+ "lionClass.appliedStereotype.add(auxStereotype);"
-			+ "return lionClass.appliedStereotype.size;");
-		assertEquals(1, module.execute());
+		module.parse("return Model.getProfile('http://www.omg.org/spec/UML/20131001/StandardProfile').name;");
+		assertEquals("StandardProfile", module.execute());
+	}
+
+	@Test
+	public void getPredefinedStereotype() throws Exception {
+		EolModule module = createEOLModule();
+		module.parse("return Model.getStereotype('http://www.omg.org/spec/UML/20131001/StandardProfile', 'Auxiliary').name;");
+		assertEquals("Auxiliary", module.execute());
 	}
 
 	@Test

@@ -12,6 +12,7 @@ package org.eclipse.epsilon.emc.magicdraw.mdplugin.remote;
 
 import static org.eclipse.epsilon.emc.magicdraw.mdplugin.remote.emf.ModelUtils.getFullyQualifiedName;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -52,6 +53,7 @@ import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceConstants;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ModelServiceGrpc;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.OpenSessionRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ProfileRequest;
+import org.eclipse.epsilon.emc.magicdraw.modelapi.ProfileStereotypeRequest;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ProjectLocation;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.ProxyList;
 import org.eclipse.epsilon.emc.magicdraw.modelapi.SetFeatureValueRequest;
@@ -77,6 +79,7 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageableElement;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Profile;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 
 import io.grpc.Metadata;
@@ -327,11 +330,26 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void getProfiles(Empty request, StreamObserver<ModelElementCollection> responseObserver) {
 		sendResponse(responseObserver, inProject()
 			.flatMapRight((project) -> {
-				Collection<Profile> profiles = StereotypesHelper.getAllProfiles(project);
+				Collection<Profile> profiles;
+				try {
+					profiles = StereotypesHelper.getAllProfiles(project);
+				} catch (NoSuchMethodError ex) {
+					// In Cameo 19.0 SP4, getAllProfiles has a different return type: we have to use reflection
+					try {
+						Method mGetAllProfiles = StereotypesHelper.class.getMethod("getAllProfiles", Project.class);
+						profiles = (Collection<Profile>) mGetAllProfiles.invoke(null, project);
+					} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+						LOGGER.error(e.getMessage(), e);
+						return Either.left(Status.INTERNAL
+							.withDescription("StereotypesHelper.getAllProfiles is unavailable")
+							.asRuntimeException());
+					}
+				}
 
 				ModelElementCollection.Builder cBuilder = ModelElementCollection.newBuilder();
 				for (Profile profile : profiles) {
