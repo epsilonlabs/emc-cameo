@@ -582,6 +582,13 @@ public class ZooModelTest {
 		assertTrue("There should be at least one predefined profile", (int) module.execute() > 1);
 	}
 
+	@Test
+	public void addEnumerationLiteral() throws Exception {
+		EolModule module = createEOLModule();
+		module.parse("return new EnumerationLiteral();");
+		assertNotNull(module.execute());
+	}
+
 	private void assumeTypeExists(String typeName) {
 		try {
 			m.getAllOfKind(typeName);

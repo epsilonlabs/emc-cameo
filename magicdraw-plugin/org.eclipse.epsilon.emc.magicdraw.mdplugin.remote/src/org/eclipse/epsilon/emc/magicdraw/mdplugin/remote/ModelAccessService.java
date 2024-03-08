@@ -427,15 +427,27 @@ public class ModelAccessService extends ModelServiceGrpc.ModelServiceImplBase {
 							Method mCreateInstance = factory.getClass().getMethod(methodName);
 							MDObject mdObject = (MDObject) mCreateInstance.invoke(factory);
 							if (mdObject instanceof PackageableElement) {
-								return findRootElement(request.getRootElementHyperlink(), project).flatMapRight((root) -> {
+								final Either<StatusRuntimeException, EObject> errorOrRoot = findRootElement(request.getRootElementHyperlink(), project);
+								return errorOrRoot.flatMapRight((root) -> {
+									final Element rootElement = (Element) root;
 									try {
-										ModelElementsManager.getInstance().addElement((Element) mdObject, (Element) root);
+										if (rootElement.canAdd(mdObject)) {
+											ModelElementsManager.getInstance().addElement((Element) mdObject, rootElement);
+										}
 										return Either.right(encoder.encode(mdObject));
 									} catch (ReadOnlyElementException e) {
 										LOGGER.error(e.getMessage(), e);
 										return Either.left(Status.INVALID_ARGUMENT
-												.withDescription(String.format("Element with ID %s is read only", ((Element) root).getID()))
+												.withDescription(String.format("Element with ID %s is read only", rootElement.getID()))
 												.asRuntimeException());
+									} catch (IllegalArgumentException e) {
+										/*
+										 * Some objects falsely report canAdd() = true (e.g.
+										 * EnumerationLiteral instances): we log a warning
+										 * and return them as is.
+										 */
+										LOGGER.warn(e.getMessage(), e);
+										return Either.right(encoder.encode(mdObject));
 									}
 								});
 							}
