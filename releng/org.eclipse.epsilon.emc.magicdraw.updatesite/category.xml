@@ -6,5 +6,11 @@
    <feature id="org.eclipse.epsilon.emc.magicdraw.remote.feature">
       <category name="org.eclipse.epsilon.emc.magicdraw"/>
    </feature>
+   <feature id="org.eclipse.epsilon.emc.magicdraw.remote.dt.feature.source">
+      <category name="org.eclipse.epsilon.emc.magicdraw"/>
+   </feature>
+   <feature id="org.eclipse.epsilon.emc.magicdraw.remote.feature.source">
+      <category name="org.eclipse.epsilon.emc.magicdraw"/>
+   </feature>
    <category-def name="org.eclipse.epsilon.emc.magicdraw" label="EMC Driver for MagicDraw"/>
 </site>
