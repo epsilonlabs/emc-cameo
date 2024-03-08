@@ -585,8 +585,17 @@ public class ZooModelTest {
 	@Test
 	public void addEnumerationLiteral() throws Exception {
 		EolModule module = createEOLModule();
-		module.parse("return new EnumerationLiteral();");
-		assertNotNull(module.execute());
+		module.parse(String.join("\n",
+			"var enum = new Enumeration;",
+			"enum.name = \"MyEnum\";",
+			"var literal = new EnumerationLiteral;",
+			"literal.name = \"FIRST\";",
+			"enum.ownedLiteral.add(literal);",
+			"return enum;"
+		));
+
+		MDModelElement result = (MDModelElement) module.execute();
+		assertEquals("uml::Enumeration", result.getTypeName());
 	}
 
 	private void assumeTypeExists(String typeName) {
